@@ -5,26 +5,18 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { User as UserIcon } from 'lucide-react';
+import { User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface ProfileCreationProps {
-  onComplete: (profileData: { name: string; gender: 'Male' | 'Female'; designation: string }) => void;
+  onComplete: (profileData: { name: string; gender: 'Male' | 'Female'; designation: 'Student' | 'Working Professional' | 'Business' | 'Freelancer' | 'Other' }) => void;
 }
 
 const ProfileCreation = ({ onComplete }: ProfileCreationProps) => {
   const [name, setName] = useState('');
   const [gender, setGender] = useState<'Male' | 'Female' | ''>('');
-  const [designation, setDesignation] = useState('');
+  const [designation, setDesignation] = useState<'Student' | 'Working Professional' | 'Business' | 'Freelancer' | 'Other' | ''>('');
   const { toast } = useToast();
-
-  const designations = [
-    'Student',
-    'Working Professional',
-    'Business',
-    'Freelancer',
-    'Other'
-  ];
 
   const handleSave = () => {
     if (!name.trim()) {
@@ -55,13 +47,13 @@ const ProfileCreation = ({ onComplete }: ProfileCreationProps) => {
     }
 
     toast({
-      title: "Profile Created",
-      description: "Your profile has been saved successfully",
+      title: "Profile Created!",
+      description: "Your profile has been saved successfully.",
     });
 
     onComplete({
       name: name.trim(),
-      gender: gender as 'Male' | 'Female',
+      gender,
       designation
     });
   };
@@ -72,7 +64,7 @@ const ProfileCreation = ({ onComplete }: ProfileCreationProps) => {
         <CardHeader className="text-center pb-4">
           <div className="flex justify-center mb-4">
             <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-green-500 rounded-full flex items-center justify-center">
-              <UserIcon className="w-8 h-8 text-white" />
+              <User className="w-8 h-8 text-white" />
             </div>
           </div>
           <CardTitle className="text-2xl font-bold text-gray-800">
@@ -82,44 +74,46 @@ const ProfileCreation = ({ onComplete }: ProfileCreationProps) => {
         </CardHeader>
         
         <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="name">Full Name *</Label>
-            <Input
-              id="name"
-              type="text"
-              placeholder="Enter your full name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name *</Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="Enter your full name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="gender">Gender *</Label>
-            <Select value={gender} onValueChange={(value) => setGender(value as 'Male' | 'Female')}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select your gender" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Male">Male</SelectItem>
-                <SelectItem value="Female">Female</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="gender">Gender *</Label>
+              <Select value={gender} onValueChange={(value: 'Male' | 'Female') => setGender(value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Male">Male</SelectItem>
+                  <SelectItem value="Female">Female</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="designation">Designation *</Label>
-            <Select value={designation} onValueChange={setDesignation}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select your designation" />
-              </SelectTrigger>
-              <SelectContent>
-                {designations.map((des) => (
-                  <SelectItem key={des} value={des}>
-                    {des}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="space-y-2">
+              <Label htmlFor="designation">Designation *</Label>
+              <Select value={designation} onValueChange={(value: 'Student' | 'Working Professional' | 'Business' | 'Freelancer' | 'Other') => setDesignation(value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your designation" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Student">Student</SelectItem>
+                  <SelectItem value="Working Professional">Working Professional</SelectItem>
+                  <SelectItem value="Business">Business</SelectItem>
+                  <SelectItem value="Freelancer">Freelancer</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <Button

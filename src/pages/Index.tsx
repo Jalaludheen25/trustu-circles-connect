@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import LandingPage from '@/components/LandingPage';
 import SignIn from '@/components/SignIn';
@@ -48,6 +47,7 @@ const Index = () => {
   const [community, setCommunity] = useState<Community | null>(null);
   const [listings, setListings] = useState<Listing[]>([]);
   const [connections, setConnections] = useState<User[]>([]);
+  const [appliedFilter, setAppliedFilter] = useState<string>('');
 
   // Load data from localStorage on mount
   useEffect(() => {
@@ -116,7 +116,7 @@ const Index = () => {
     setUser(prev => ({ ...prev, ...userData } as User));
   };
 
-  const handleProfileCreation = (profileData: Partial<User>) => {
+  const handleProfileCreation = (profileData: { name: string; gender: 'Male' | 'Female'; designation: 'Student' | 'Working Professional' | 'Business' | 'Freelancer' | 'Other' }) => {
     setUser(prev => ({ ...prev, ...profileData } as User));
     setCurrentStep('join-community');
   };
@@ -154,6 +154,10 @@ const Index = () => {
     setConnections(prev => prev.filter(conn => conn.id !== connectionId));
   };
 
+  const handleFilterApplied = (filter: string) => {
+    setAppliedFilter(filter);
+  };
+
   const renderCurrentStep = () => {
     switch (currentStep) {
       case 'landing':
@@ -171,6 +175,8 @@ const Index = () => {
             community={community!}
             listings={listings}
             onNavigate={setCurrentStep}
+            appliedFilter={appliedFilter}
+            onFilterApplied={handleFilterApplied}
           />
         );
       case 'add-service':

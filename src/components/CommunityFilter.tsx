@@ -14,41 +14,39 @@ interface CommunityFilterProps {
 }
 
 const CommunityFilter = ({ user, onClose, onFilterChange }: CommunityFilterProps) => {
-  const [selectedDistrict, setSelectedDistrict] = useState('');
-
-  const districts = {
-    'Kerala': ['Thiruvananthapuram', 'Kollam', 'Pathanamthitta', 'Alappuzha', 'Kottayam', 'Idukki', 'Ernakulam', 'Thrissur', 'Palakkad', 'Malappuram', 'Kozhikode', 'Wayanad', 'Kannur', 'Kasaragod'],
-    'Tamil Nadu': ['Chennai', 'Coimbatore', 'Madurai', 'Tiruchirappalli', 'Salem', 'Tirunelveli', 'Tiruppur', 'Vellore', 'Erode', 'Thoothukkudi', 'Dindigul', 'Thanjavur'],
-    'Delhi': ['Central Delhi', 'North Delhi', 'South Delhi', 'East Delhi', 'West Delhi', 'North East Delhi', 'North West Delhi', 'South East Delhi', 'South West Delhi', 'Shahdara', 'New Delhi']
-  };
+  const [selectedFilter, setSelectedFilter] = useState('');
 
   const getAvailableFilters = () => {
     const filters = [];
     
-    // User can filter communities based on their own state combinations
+    // If user is in a cross-state community (home state different from current state)
     if (user.homeState !== user.currentState) {
-      // They're in a cross-state community
-      const homeStateDistricts = districts[user.homeState as keyof typeof districts] || [];
-      const currentStateDistricts = districts[user.currentState as keyof typeof districts] || [];
+      const homePeople = user.homeState === 'Kerala' ? 'Keralites' : 
+                         user.homeState === 'Tamil Nadu' ? 'Tamilians' : 'Delhites';
       
-      homeStateDistricts.forEach(district => {
-        currentStateDistricts.forEach(currentDistrict => {
-          const homePeople = user.homeState === 'Kerala' ? 'Keralites' : 
-                           user.homeState === 'Tamil Nadu' ? 'Tamilians' : 'Delhites';
-          filters.push(`${homePeople} in ${currentDistrict}`);
-        });
-      });
+      // Add filter for specific district combinations
+      filters.push(`${homePeople} in ${user.currentDistrict}`);
+      
+      // Add general state filter
+      filters.push(`${homePeople} in ${user.currentState}`);
+      
+      // Add home district specific filter if different districts
+      if (user.homeDistrict !== user.currentDistrict) {
+        filters.push(`${user.homeDistrict} - ${user.currentState}`);
+      }
     } else {
-      // They're in same state community
-      const stateDistricts = districts[user.homeState as keyof typeof districts] || [];
-      stateDistricts.forEach(district => {
-        if (district !== user.homeDistrict) {
-          filters.push(`${user.homeState} - ${district}`);
-        }
-      });
+      // Same state community - filter by districts within the state
+      filters.push(`${user.homeState}`); // General state community
+      
+      // If they're in different districts within the same state
+      if (user.homeDistrict !== user.currentDistrict) {
+        filters.push(`${user.homeDistrict} - ${user.currentDistrict}`);
+        filters.push(`${user.homeState} - ${user.currentDistrict}`);
+        filters.push(`${user.homeState} - ${user.homeDistrict}`);
+      }
     }
     
-    return filters;
+    return [...new Set(filters)]; // Remove duplicates
   };
 
   const availableFilters = getAvailableFilters();
@@ -66,7 +64,7 @@ const CommunityFilter = ({ user, onClose, onFilterChange }: CommunityFilterProps
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>Select Community</Label>
-            <Select value={selectedDistrict} onValueChange={setSelectedDistrict}>
+            <Select value={selectedFilter} onValueChange={setSelectedFilter}>
               <SelectTrigger>
                 <SelectValue placeholder="Choose a community filter" />
               </SelectTrigger>
@@ -81,8 +79,9 @@ const CommunityFilter = ({ user, onClose, onFilterChange }: CommunityFilterProps
           </div>
 
           <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
-            <p className="font-medium mb-1">Note:</p>
-            <p>You can only join communities related to your registered locations ({user.homeState} and {user.currentState}).</p>
+            <p className="font-medium mb-1">Your Registered Locations:</p>
+            <p>Home: {user.homeDistrict}, {user.homeState}</p>
+            <p>Current: {user.currentDistrict}, {user.currentState}</p>
           </div>
 
           <div className="flex space-x-3">
@@ -95,11 +94,11 @@ const CommunityFilter = ({ user, onClose, onFilterChange }: CommunityFilterProps
             </Button>
             <Button
               onClick={() => {
-                if (selectedDistrict) {
-                  onFilterChange(selectedDistrict);
+                if (selectedFilter) {
+                  onFilterChange(selectedFilter);
                 }
               }}
-              disabled={!selectedDistrict}
+              disabled={!selectedFilter}
               className="flex-1 bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600"
             >
               Apply Filter

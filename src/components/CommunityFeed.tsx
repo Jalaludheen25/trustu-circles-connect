@@ -14,9 +14,11 @@ interface CommunityFeedProps {
   community: Community;
   listings: Listing[];
   onNavigate: (step: string) => void;
+  appliedFilter?: string;
+  onFilterApplied?: (filter: string) => void;
 }
 
-const CommunityFeed = ({ user, community, listings, onNavigate }: CommunityFeedProps) => {
+const CommunityFeed = ({ user, community, listings, onNavigate, appliedFilter, onFilterApplied }: CommunityFeedProps) => {
   const [activeTab, setActiveTab] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilter, setShowFilter] = useState(false);
@@ -48,6 +50,13 @@ const CommunityFeed = ({ user, community, listings, onNavigate }: CommunityFeedP
     return `₹${price}`;
   };
 
+  const handleFilterChange = (newFilter: string) => {
+    onFilterApplied?.(newFilter);
+    setShowFilter(false);
+  };
+
+  const displayCommunityName = appliedFilter || community.name;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
       {/* Header */}
@@ -56,7 +65,14 @@ const CommunityFeed = ({ user, community, listings, onNavigate }: CommunityFeedP
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
               <Users className="w-6 h-6 text-blue-500" />
-              <h1 className="text-xl font-bold text-gray-800">{community.name}</h1>
+              <div>
+                <h1 className="text-xl font-bold text-gray-800">{displayCommunityName}</h1>
+                {appliedFilter && (
+                  <Badge variant="secondary" className="text-xs mt-1">
+                    Filtered View
+                  </Badge>
+                )}
+              </div>
             </div>
             <div className="flex items-center space-x-2">
               <Button
@@ -209,11 +225,7 @@ const CommunityFeed = ({ user, community, listings, onNavigate }: CommunityFeedP
         <CommunityFilter
           user={user}
           onClose={() => setShowFilter(false)}
-          onFilterChange={(newCommunity) => {
-            // In a real app, this would update the community filter
-            console.log('Filter changed to:', newCommunity);
-            setShowFilter(false);
-          }}
+          onFilterChange={handleFilterChange}
         />
       )}
     </div>
