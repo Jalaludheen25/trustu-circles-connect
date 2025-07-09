@@ -1,12 +1,213 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import { useState, useEffect } from 'react';
+import LandingPage from '@/components/LandingPage';
+import SignIn from '@/components/SignIn';
+import ProfileCreation from '@/components/ProfileCreation';
+import JoinCommunity from '@/components/JoinCommunity';
+import CommunityFeed from '@/components/CommunityFeed';
+import AddService from '@/components/AddService';
+import SellProduct from '@/components/SellProduct';
+import Connections from '@/components/Connections';
+
+export type User = {
+  id: string;
+  name: string;
+  gender: 'Male' | 'Female';
+  designation: 'Student' | 'Working Professional' | 'Business' | 'Freelancer' | 'Other';
+  homeState: string;
+  homeDistrict: string;
+  currentState: string;
+  currentDistrict: string;
+  phone?: string;
+  email?: string;
+};
+
+export type Community = {
+  id: string;
+  name: string;
+  members: User[];
+};
+
+export type Listing = {
+  id: string;
+  userId: string;
+  user: User;
+  type: 'accommodation' | 'proxy' | 'product';
+  title: string;
+  description: string;
+  location: string;
+  contact: string;
+  price?: string;
+  details: any;
+  createdAt: Date;
+};
 
 const Index = () => {
+  const [currentStep, setCurrentStep] = useState('landing');
+  const [user, setUser] = useState<User | null>(null);
+  const [community, setCommunity] = useState<Community | null>(null);
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [connections, setConnections] = useState<User[]>([]);
+
+  // Load data from localStorage on mount
+  useEffect(() => {
+    const savedUser = localStorage.getItem('trustu_user');
+    const savedListings = localStorage.getItem('trustu_listings');
+    const savedConnections = localStorage.getItem('trustu_connections');
+    
+    if (savedUser) {
+      const userData = JSON.parse(savedUser);
+      setUser(userData);
+      if (userData.currentState) {
+        setCurrentStep('feed');
+        // Generate community based on user data
+        const communityName = generateCommunityName(userData);
+        setCommunity({ id: '1', name: communityName, members: [userData] });
+      } else {
+        setCurrentStep('join-community');
+      }
+    }
+    
+    if (savedListings) {
+      setListings(JSON.parse(savedListings));
+    }
+    
+    if (savedConnections) {
+      setConnections(JSON.parse(savedConnections));
+    }
+  }, []);
+
+  // Save data to localStorage whenever it changes
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('trustu_user', JSON.stringify(user));
+    }
+  }, [user]);
+
+  useEffect(() => {
+    localStorage.setItem('trustu_listings', JSON.stringify(listings));
+  }, [listings]);
+
+  useEffect(() => {
+    localStorage.setItem('trustu_connections', JSON.stringify(connections));
+  }, [connections]);
+
+  const generateCommunityName = (userData: User) => {
+    if (userData.homeState === userData.currentState) {
+      return userData.homeState;
+    }
+    
+    const homeStateMap: { [key: string]: string } = {
+      'Kerala': 'Keralites',
+      'Tamil Nadu': 'Tamilians',
+      'Delhi': 'Delhites'
+    };
+    
+    const homePeople = homeStateMap[userData.homeState] || userData.homeState;
+    return `${homePeople} in ${userData.currentState}`;
+  };
+
+  const handleSignIn = (userData: Partial<User>) => {
+    if (userData.name) {
+      setCurrentStep('join-community');
+    } else {
+      setCurrentStep('profile');
+    }
+    setUser(prev => ({ ...prev, ...userData } as User));
+  };
+
+  const handleProfileCreation = (profileData: Partial<User>) => {
+    setUser(prev => ({ ...prev, ...profileData } as User));
+    setCurrentStep('join-community');
+  };
+
+  const handleJoinCommunity = (communityData: Partial<User>) => {
+    const updatedUser = { ...user, ...communityData } as User;
+    setUser(updatedUser);
+    
+    const communityName = generateCommunityName(updatedUser);
+    setCommunity({ id: '1', name: communityName, members: [updatedUser] });
+    
+    setCurrentStep('feed');
+  };
+
+  const handleAddListing = (listing: Omit<Listing, 'id' | 'userId' | 'user' | 'createdAt'>) => {
+    if (!user) return;
+    
+    const newListing: Listing = {
+      ...listing,
+      id: Date.now().toString(),
+      userId: user.id,
+      user: user,
+      createdAt: new Date()
+    };
+    
+    setListings(prev => [newListing, ...prev]);
+    setCurrentStep('feed');
+  };
+
+  const handleAddConnection = (newConnection: User) => {
+    setConnections(prev => [...prev, newConnection]);
+  };
+
+  const handleRemoveConnection = (connectionId: string) => {
+    setConnections(prev => prev.filter(conn => conn.id !== connectionId));
+  };
+
+  const renderCurrentStep = () => {
+    switch (currentStep) {
+      case 'landing':
+        return <LandingPage onContinue={() => setCurrentStep('signin')} />;
+      case 'signin':
+        return <SignIn onSignIn={handleSignIn} />;
+      case 'profile':
+        return <ProfileCreation onComplete={handleProfileCreation} />;
+      case 'join-community':
+        return <JoinCommunity onComplete={handleJoinCommunity} user={user} />;
+      case 'feed':
+        return (
+          <CommunityFeed
+            user={user!}
+            community={community!}
+            listings={listings}
+            onNavigate={setCurrentStep}
+          />
+        );
+      case 'add-service':
+        return (
+          <AddService
+            user={user!}
+            onComplete={handleAddListing}
+            onBack={() => setCurrentStep('feed')}
+          />
+        );
+      case 'sell-product':
+        return (
+          <SellProduct
+            user={user!}
+            onComplete={handleAddListing}
+            onBack={() => setCurrentStep('feed')}
+          />
+        );
+      case 'connections':
+        return (
+          <Connections
+            user={user!}
+            community={community!}
+            connections={connections}
+            onAddConnection={handleAddConnection}
+            onRemoveConnection={handleRemoveConnection}
+            onBack={() => setCurrentStep('feed')}
+          />
+        );
+      default:
+        return <LandingPage onContinue={() => setCurrentStep('signin')} />;
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
+      {renderCurrentStep()}
     </div>
   );
 };
