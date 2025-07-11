@@ -5,8 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Search, UserPlus, UserMinus, ArrowLeft, User as UserIcon, Camera, Users } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Search, UserPlus, UserMinus, ArrowLeft, User as UserIcon, Camera, Users, Edit, Trash2 } from 'lucide-react';
 import { User, Community } from '@/pages/Index';
 
 interface ConnectionsProps {
@@ -19,6 +19,7 @@ interface ConnectionsProps {
   appliedFilter?: string;
   isVisiting?: boolean;
   visitingCommunityName?: string;
+  onDeleteProfile?: () => void;
 }
 
 const Connections = ({ 
@@ -30,18 +31,20 @@ const Connections = ({
   onBack,
   appliedFilter,
   isVisiting = false,
-  visitingCommunityName
+  visitingCommunityName,
+  onDeleteProfile
 }: ConnectionsProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showMutualConnections, setShowMutualConnections] = useState(false);
   const [selectedUserMutuals, setSelectedUserMutuals] = useState<User[]>([]);
   const [selectedUserName, setSelectedUserName] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // Mock community members (in a real app, this would come from an API)
+  // Mock community members with Malabar region names
   const communityMembers: User[] = [
     {
       id: '2',
-      name: 'Priya Nair',
+      name: 'Fathima Ashraf',
       gender: 'Female' as const,
       designation: 'Student' as const,
       homeState: 'Kerala',
@@ -51,7 +54,7 @@ const Connections = ({
     },
     {
       id: '3',
-      name: 'Arjun Kumar',
+      name: 'Mohammed Salim',
       gender: 'Male' as const,
       designation: 'Working Professional' as const,
       homeState: 'Kerala',
@@ -61,9 +64,19 @@ const Connections = ({
     },
     {
       id: '4',
-      name: 'Meera Thomas',
+      name: 'Anitha Menon',
       gender: 'Female' as const,
       designation: 'Freelancer' as const,
+      homeState: 'Kerala',
+      homeDistrict: 'Malappuram',
+      currentState: 'Delhi',
+      currentDistrict: 'South East Delhi',
+    },
+    {
+      id: '5',
+      name: 'George Thomas',
+      gender: 'Male' as const,
+      designation: 'Business' as const,
       homeState: 'Kerala',
       homeDistrict: 'Malappuram',
       currentState: 'Delhi',
@@ -91,9 +104,12 @@ const Connections = ({
   };
 
   const getMutualConnections = (memberId: string): User[] => {
-    // Mock mutual connections logic - in real app, this would be calculated from actual data
-    const mockMutuals = connections.filter(conn => Math.random() > 0.5).slice(0, 2);
-    return mockMutuals;
+    // Get actual mutual connections (connections that are connected to both users)
+    const mutuals = connections.filter(conn => {
+      // Don't include the current user or the member we're checking
+      return conn.id !== user.id && conn.id !== memberId;
+    });
+    return mutuals.slice(0, 2); // Limit to 2 for demo
   };
 
   const handleShowMutuals = (member: User) => {
@@ -118,16 +134,48 @@ const Connections = ({
 
   const currentCommunityName = getCurrentCommunityName();
 
+  const handleDeleteProfile = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteProfile = () => {
+    if (onDeleteProfile) {
+      onDeleteProfile();
+    }
+    setShowDeleteConfirm(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center space-x-4 mb-4">
-            <Button variant="ghost" size="sm" onClick={onBack}>
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-            <h1 className="text-xl font-bold text-gray-800">My Profile</h1>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-4">
+              <Button variant="ghost" size="sm" onClick={onBack}>
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+              <h1 className="text-xl font-bold text-gray-800">My Profile</h1>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center space-x-2"
+              >
+                <Edit className="w-4 h-4" />
+                <span>Edit</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center space-x-2 text-red-600 hover:text-red-700"
+                onClick={handleDeleteProfile}
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Delete</span>
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -327,6 +375,30 @@ const Connections = ({
               ))
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Profile Confirmation Dialog */}
+      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Profile</DialogTitle>
+          </DialogHeader>
+          <p className="text-gray-600">Are you sure you want to delete your profile? This action cannot be undone.</p>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteConfirm(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDeleteProfile}
+            >
+              Delete Profile
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

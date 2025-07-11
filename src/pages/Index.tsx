@@ -168,6 +168,22 @@ const Index = () => {
     setCurrentStep('feed');
   };
 
+  const handleDeleteListing = (listingId: string) => {
+    setListings(prev => prev.filter(listing => listing.id !== listingId));
+  };
+
+  const handleDeleteProfile = () => {
+    // Clear all data and return to landing page
+    localStorage.removeItem('trustu_user');
+    localStorage.removeItem('trustu_listings');
+    localStorage.removeItem('trustu_connections');
+    setUser(null);
+    setCommunity(null);
+    setListings([]);
+    setConnections([]);
+    setCurrentStep('landing');
+  };
+
   const handleAddConnection = (newConnection: User) => {
     setConnections(prev => [...prev, newConnection]);
   };
@@ -183,7 +199,7 @@ const Index = () => {
   const handleVisitCommunity = (homeState: string, homeDistrict: string, currentState: string, currentDistrict: string) => {
     setVisitingCommunityData({ homeState, homeDistrict, currentState, currentDistrict });
     setIsVisitingCommunity(true);
-    setAppliedFilter(''); // Clear any existing filters
+    setAppliedFilter('');
   };
 
   const handleBackToMyCommunity = () => {
@@ -219,6 +235,7 @@ const Index = () => {
             visitingCommunityName={visitingCommunityName}
             onBackToMyCommunity={handleBackToMyCommunity}
             onVisitCommunity={handleVisitCommunity}
+            onDeleteListing={handleDeleteListing}
           />
         );
       case 'add-service':
@@ -251,6 +268,7 @@ const Index = () => {
             visitingCommunityName={visitingCommunityData 
               ? generateVisitingCommunityName(visitingCommunityData.homeState, visitingCommunityData.currentState)
               : ''}
+            onDeleteProfile={handleDeleteProfile}
           />
         );
       default:

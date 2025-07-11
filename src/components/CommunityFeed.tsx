@@ -1,10 +1,12 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Filter, User as UserIcon, Plus, Search, Phone, MessageCircle, MapPin, Users, Eye } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Filter, User as UserIcon, Plus, Search, Phone, MessageCircle, MapPin, Users, Eye, Edit, Trash2 } from 'lucide-react';
 import { User, Community, Listing } from '@/pages/Index';
 import CommunityFilter from './CommunityFilter';
 
@@ -19,6 +21,7 @@ interface CommunityFeedProps {
   visitingCommunityName?: string;
   onBackToMyCommunity?: () => void;
   onVisitCommunity?: (homeState: string, homeDistrict: string, currentState: string, currentDistrict: string) => void;
+  onDeleteListing?: (listingId: string) => void;
 }
 
 const CommunityFeed = ({ 
@@ -31,11 +34,13 @@ const CommunityFeed = ({
   isVisiting = false,
   visitingCommunityName,
   onBackToMyCommunity,
-  onVisitCommunity
+  onVisitCommunity,
+  onDeleteListing
 }: CommunityFeedProps) => {
   const [activeTab, setActiveTab] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilter, setShowFilter] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; listing: Listing | null }>({ show: false, listing: null });
 
   // Function to check if a user belongs to the current community context
   const userBelongsToCommunity = (listingUser: User, homeState: string, homeDistrict: string, currentState: string, currentDistrict: string) => {
@@ -61,7 +66,6 @@ const CommunityFeed = ({
     
     if (isVisiting && visitingCommunityName) {
       // Extract community info from visiting community name
-      // For "Keralites in Delhi" format
       if (visitingCommunityName.includes(' in ')) {
         const parts = visitingCommunityName.split(' in ');
         const homeStateMap: { [key: string]: string } = {
@@ -72,15 +76,11 @@ const CommunityFeed = ({
         const homeState = homeStateMap[parts[0]] || parts[0];
         const currentState = parts[1];
         
-        // For visiting communities, we need to check if the listing user belongs to that specific community
-        // This would require more specific filtering logic based on your community data structure
         belongsToCommunity = listing.user.homeState === homeState && listing.user.currentState === currentState;
       } else {
-        // Single state community like "Kerala"
         belongsToCommunity = listing.user.homeState === visitingCommunityName && listing.user.currentState === visitingCommunityName;
       }
     } else {
-      // For user's own community
       belongsToCommunity = userBelongsToCommunity(
         listing.user, 
         user.homeState, 
@@ -94,7 +94,6 @@ const CommunityFeed = ({
   });
 
   const handleContact = (contact: string) => {
-    // In a real app, this would open WhatsApp or initiate a call
     window.open(`https://wa.me/91${contact.replace(/\D/g, '')}`, '_blank');
   };
 
@@ -120,8 +119,62 @@ const CommunityFeed = ({
 
   const displayCommunityName = isVisiting ? visitingCommunityName : (appliedFilter || community.name);
 
-  // Calculate real member count - for visited communities, this would need actual member data
-  const memberCount = isVisiting ? 1 : community.members.length;
+  // Calculate real member count
+  const getMemberCount = () => {
+    if (isVisiting && visitingCommunityName) {
+      // Count actual users in visited community based on listings
+      const uniqueUsers = new Set();
+      listings.forEach(listing => {
+        if (visitingCommunityName.includes(' in ')) {
+          const parts = visitingCommunityName.split(' in ');
+          const homeStateMap: { [key: string]: string } = {
+            'Keralites': 'Kerala',
+            'Tamilians': 'Tamil Nadu',
+            'Delhites': 'Delhi'
+          };
+          const homeState = homeStateMap[parts[0]] || parts[0];
+          const currentState = parts[1];
+          
+          if (listing.user.homeState === homeState && listing.user.currentState === currentState) {
+            uniqueUsers.add(listing.user.id);
+          }
+        } else {
+          if (listing.user.homeState === visitingCommunityName && listing.user.currentState === visitingCommunityName) {
+            uniqueUsers.add(listing.user.id);
+          }
+        }
+      });
+      return uniqueUsers.size;
+    } else {
+      // For user's own community, count unique users including themselves
+      const uniqueUsers = new Set([user.id]);
+      listings.forEach(listing => {
+        if (userBelongsToCommunity(listing.user, user.homeState, user.homeDistrict, user.currentState, user.currentDistrict)) {
+          uniqueUsers.add(listing.user.id);
+        }
+      });
+      return uniqueUsers.size;
+    }
+  };
+
+  const memberCount = getMemberCount();
+
+  const handleDeleteListing = (listing: Listing) => {
+    setDeleteConfirm({ show: true, listing });
+  };
+
+  const confirmDelete = () => {
+    if (deleteConfirm.listing && onDeleteListing) {
+      onDeleteListing(deleteConfirm.listing.id);
+    }
+    setDeleteConfirm({ show: false, listing: null });
+  };
+
+  const getDeleteMessage = (listing: Listing | null) => {
+    if (!listing) return "Are you sure you want to delete this?";
+    if (listing.type === 'product') return "Are you sure you want to delete this product listing?";
+    return "Are you sure you want to delete this service?";
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
@@ -226,17 +279,38 @@ const CommunityFeed = ({
                         </div>
                       </div>
                     </div>
-                    <Badge 
-                      variant="default" 
-                      className={
-                        listing.type === 'accommodation' ? 'bg-blue-100 text-blue-800' :
-                        listing.type === 'proxy' ? 'bg-green-100 text-green-800' :
-                        'bg-purple-100 text-purple-800'
-                      }
-                    >
-                      {listing.type === 'accommodation' ? 'Accommodation' :
-                       listing.type === 'proxy' ? 'Proxy Service' : 'Product'}
-                    </Badge>
+                    <div className="flex items-center space-x-2">
+                      <Badge 
+                        variant="default" 
+                        className={
+                          listing.type === 'accommodation' ? 'bg-blue-100 text-blue-800' :
+                          listing.type === 'proxy' ? 'bg-green-100 text-green-800' :
+                          'bg-purple-100 text-purple-800'
+                        }
+                      >
+                        {listing.type === 'accommodation' ? 'Accommodation' :
+                         listing.type === 'proxy' ? 'Proxy Service' : 'Product'}
+                      </Badge>
+                      {listing.user.id === user.id && (
+                        <div className="flex space-x-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="p-1 h-8 w-8"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="p-1 h-8 w-8 text-red-600 hover:text-red-700"
+                            onClick={() => handleDeleteListing(listing)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="mb-4">
@@ -313,6 +387,30 @@ const CommunityFeed = ({
           onVisitCommunity={handleVisitCommunity}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteConfirm.show} onOpenChange={(open) => setDeleteConfirm({ show: open, listing: null })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Delete</DialogTitle>
+          </DialogHeader>
+          <p className="text-gray-600">{getDeleteMessage(deleteConfirm.listing)}</p>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteConfirm({ show: false, listing: null })}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
