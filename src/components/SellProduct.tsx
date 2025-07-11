@@ -50,6 +50,15 @@ const SellProduct = ({ user, onComplete, onBack, existingListing, isEditing = fa
     'Other'
   ];
 
+  const amountRanges = [
+    '100-500',
+    '500-1000',
+    '1000-2000', 
+    '2000-5000',
+    '5000-10000',
+    '10000+'
+  ];
+
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -138,12 +147,21 @@ const SellProduct = ({ user, onComplete, onBack, existingListing, isEditing = fa
 
             <div className="space-y-2">
               <Label>Amount *</Label>
-              <Input
-                type="number"
-                placeholder="Enter selling price"
-                value={formData.amount}
-                onChange={(e) => setFormData({...formData, amount: e.target.value})}
-              />
+              <Select 
+                value={formData.amount} 
+                onValueChange={(value) => setFormData({...formData, amount: value})}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select price range" />
+                </SelectTrigger>
+                <SelectContent>
+                  {amountRanges.map((range) => (
+                    <SelectItem key={range} value={range}>
+                      ₹{range === '10000+' ? '10000 and above' : range}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">

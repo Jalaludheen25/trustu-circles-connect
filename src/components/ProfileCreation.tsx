@@ -58,6 +58,7 @@ const ProfileCreation = ({ onComplete, user, isEditing = false, onUpdateUser }: 
     if (isEditing && user && onUpdateUser) {
       const updatedUser = { ...user, name: name.trim(), gender, designation };
       onUpdateUser(updatedUser);
+      onComplete({ name: name.trim(), gender, designation });
     } else {
       onComplete({
         name: name.trim(),

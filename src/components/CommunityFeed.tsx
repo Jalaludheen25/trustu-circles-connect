@@ -44,25 +44,25 @@ const CommunityFeed = ({
   const [showFilter, setShowFilter] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; listing: Listing | null }>({ show: false, listing: null });
   
-  // Section-specific filters
+  // Section-specific filters with proper ranges
   const [accommodationFilters, setAccommodationFilters] = useState({
-    type: '',
+    accommodationType: '',
     location: '',
     availableFor: '',
-    priceRange: ''
+    rentPerDay: '',
+    rentPerMonth: ''
   });
   
   const [proxyFilters, setProxyFilters] = useState({
-    serviceType: '',
+    proxyType: '',
     location: '',
-    urgency: ''
+    charge: ''
   });
   
   const [productFilters, setProductFilters] = useState({
-    category: '',
-    condition: '',
-    priceRange: '',
-    location: ''
+    itemType: '',
+    location: '',
+    amount: ''
   });
 
   // Function to check if a user belongs to the current community context
@@ -113,33 +113,50 @@ const CommunityFeed = ({
       );
     }
 
-    // Apply section-specific filters
+    // Apply section-specific filters based on actual form data
     let matchesSectionFilter = true;
     if (activeTab === 'accommodation' && listing.type === 'accommodation') {
-      if (accommodationFilters.type && accommodationFilters.type !== 'all-types' && !listing.details?.accommodationType?.toLowerCase().includes(accommodationFilters.type.toLowerCase())) {
+      if (accommodationFilters.accommodationType && accommodationFilters.accommodationType !== 'all-types' && 
+          listing.details?.accommodationType !== accommodationFilters.accommodationType) {
         matchesSectionFilter = false;
       }
       if (accommodationFilters.location && !listing.location.toLowerCase().includes(accommodationFilters.location.toLowerCase())) {
         matchesSectionFilter = false;
       }
-      if (accommodationFilters.availableFor && accommodationFilters.availableFor !== 'all-available' && !listing.details?.availableFor?.toLowerCase().includes(accommodationFilters.availableFor.toLowerCase())) {
+      if (accommodationFilters.availableFor && accommodationFilters.availableFor !== 'all-available' && 
+          !listing.details?.availableFor?.includes(accommodationFilters.availableFor)) {
+        matchesSectionFilter = false;
+      }
+      if (accommodationFilters.rentPerDay && accommodationFilters.rentPerDay !== 'all-day-rates' && 
+          listing.details?.rentPerDay !== accommodationFilters.rentPerDay) {
+        matchesSectionFilter = false;
+      }
+      if (accommodationFilters.rentPerMonth && accommodationFilters.rentPerMonth !== 'all-month-rates' && 
+          listing.details?.rentPerMonth !== accommodationFilters.rentPerMonth) {
         matchesSectionFilter = false;
       }
     } else if (activeTab === 'proxy' && listing.type === 'proxy') {
-      if (proxyFilters.serviceType && proxyFilters.serviceType !== 'all-services' && !listing.details?.serviceType?.toLowerCase().includes(proxyFilters.serviceType.toLowerCase())) {
+      if (proxyFilters.proxyType && proxyFilters.proxyType !== 'all-services' && 
+          listing.details?.proxyType !== proxyFilters.proxyType) {
         matchesSectionFilter = false;
       }
       if (proxyFilters.location && !listing.location.toLowerCase().includes(proxyFilters.location.toLowerCase())) {
         matchesSectionFilter = false;
       }
-    } else if (activeTab === 'buy-sell' && listing.type === 'product') {
-      if (productFilters.category && productFilters.category !== 'all-categories' && !listing.details?.category?.toLowerCase().includes(productFilters.category.toLowerCase())) {
+      if (proxyFilters.charge && proxyFilters.charge !== 'all-charges' && 
+          listing.details?.charge !== proxyFilters.charge) {
         matchesSectionFilter = false;
       }
-      if (productFilters.condition && productFilters.condition !== 'all-conditions' && !listing.details?.condition?.toLowerCase().includes(productFilters.condition.toLowerCase())) {
+    } else if (activeTab === 'buy-sell' && listing.type === 'product') {
+      if (productFilters.itemType && productFilters.itemType !== 'all-items' && 
+          listing.details?.itemType !== productFilters.itemType) {
         matchesSectionFilter = false;
       }
       if (productFilters.location && !listing.location.toLowerCase().includes(productFilters.location.toLowerCase())) {
+        matchesSectionFilter = false;
+      }
+      if (productFilters.amount && productFilters.amount !== 'all-amounts' && 
+          listing.details?.amount !== productFilters.amount) {
         matchesSectionFilter = false;
       }
     }
@@ -266,25 +283,26 @@ const CommunityFeed = ({
   };
 
   const clearSectionFilters = () => {
-    setAccommodationFilters({ type: '', location: '', availableFor: '', priceRange: '' });
-    setProxyFilters({ serviceType: '', location: '', urgency: '' });
-    setProductFilters({ category: '', condition: '', priceRange: '', location: '' });
+    setAccommodationFilters({ accommodationType: '', location: '', availableFor: '', rentPerDay: '', rentPerMonth: '' });
+    setProxyFilters({ proxyType: '', location: '', charge: '' });
+    setProductFilters({ itemType: '', location: '', amount: '' });
   };
 
   const renderSectionFilters = () => {
     if (activeTab === 'accommodation') {
       return (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
-          <Select value={accommodationFilters.type} onValueChange={(value) => setAccommodationFilters(prev => ({ ...prev, type: value }))}>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-4">
+          <Select value={accommodationFilters.accommodationType} onValueChange={(value) => setAccommodationFilters(prev => ({ ...prev, accommodationType: value }))}>
             <SelectTrigger>
               <SelectValue placeholder="Type" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all-types">All Types</SelectItem>
-              <SelectItem value="single">Single Room</SelectItem>
-              <SelectItem value="shared">Shared Room</SelectItem>
-              <SelectItem value="apartment">Apartment</SelectItem>
-              <SelectItem value="pg">PG</SelectItem>
+              <SelectItem value="Flat (Permanent Stay)">Flat (Permanent Stay)</SelectItem>
+              <SelectItem value="Flat (Temporary Stay)">Flat (Temporary Stay)</SelectItem>
+              <SelectItem value="Hostel">Hostel</SelectItem>
+              <SelectItem value="PG">PG</SelectItem>
+              <SelectItem value="Hotel">Hotel</SelectItem>
             </SelectContent>
           </Select>
           
@@ -300,9 +318,38 @@ const CommunityFeed = ({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all-available">All</SelectItem>
-              <SelectItem value="male">Male</SelectItem>
-              <SelectItem value="female">Female</SelectItem>
-              <SelectItem value="family">Family</SelectItem>
+              <SelectItem value="Male Bachelors">Male Bachelors</SelectItem>
+              <SelectItem value="Female Bachelors">Female Bachelors</SelectItem>
+              <SelectItem value="Families">Families</SelectItem>
+              <SelectItem value="Anyone">Anyone</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Select value={accommodationFilters.rentPerDay} onValueChange={(value) => setAccommodationFilters(prev => ({ ...prev, rentPerDay: value }))}>
+            <SelectTrigger>
+              <SelectValue placeholder="Daily Rate" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all-day-rates">All Daily Rates</SelectItem>
+              <SelectItem value="100-200">₹100-200</SelectItem>
+              <SelectItem value="200-400">₹200-400</SelectItem>
+              <SelectItem value="400-600">₹400-600</SelectItem>
+              <SelectItem value="600-800">₹600-800</SelectItem>
+              <SelectItem value="800-1000">₹800-1000</SelectItem>
+              <SelectItem value="1000+">₹1000+</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Select value={accommodationFilters.rentPerMonth} onValueChange={(value) => setAccommodationFilters(prev => ({ ...prev, rentPerMonth: value }))}>
+            <SelectTrigger>
+              <SelectValue placeholder="Monthly Rate" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all-month-rates">All Monthly Rates</SelectItem>
+              <SelectItem value="1500-2500">₹1500-2500</SelectItem>
+              <SelectItem value="2500-3500">₹2500-3500</SelectItem>
+              <SelectItem value="3500-4500">₹3500-4500</SelectItem>
+              <SelectItem value="4500+">₹4500+</SelectItem>
             </SelectContent>
           </Select>
           
@@ -313,17 +360,18 @@ const CommunityFeed = ({
       );
     } else if (activeTab === 'proxy') {
       return (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-4">
-          <Select value={proxyFilters.serviceType} onValueChange={(value) => setProxyFilters(prev => ({ ...prev, serviceType: value }))}>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
+          <Select value={proxyFilters.proxyType} onValueChange={(value) => setProxyFilters(prev => ({ ...prev, proxyType: value }))}>
             <SelectTrigger>
               <SelectValue placeholder="Service Type" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all-services">All Services</SelectItem>
-              <SelectItem value="document">Document Service</SelectItem>
-              <SelectItem value="delivery">Delivery</SelectItem>
-              <SelectItem value="queue">Queue Service</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
+              <SelectItem value="Tourist Guide">Tourist Guide</SelectItem>
+              <SelectItem value="Proxy Work (Jamia)">Proxy Work (Jamia)</SelectItem>
+              <SelectItem value="Proxy Work (DU)">Proxy Work (DU)</SelectItem>
+              <SelectItem value="Proxy Work (Anywhere in Delhi)">Proxy Work (Anywhere in Delhi)</SelectItem>
+              <SelectItem value="Room Search Assistance">Room Search Assistance</SelectItem>
             </SelectContent>
           </Select>
           
@@ -333,6 +381,20 @@ const CommunityFeed = ({
             onChange={(e) => setProxyFilters(prev => ({ ...prev, location: e.target.value }))}
           />
           
+          <Select value={proxyFilters.charge} onValueChange={(value) => setProxyFilters(prev => ({ ...prev, charge: value }))}>
+            <SelectTrigger>
+              <SelectValue placeholder="Charge Range" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all-charges">All Charges</SelectItem>
+              <SelectItem value="100-200">₹100-200</SelectItem>
+              <SelectItem value="200-500">₹200-500</SelectItem>
+              <SelectItem value="500-700">₹500-700</SelectItem>
+              <SelectItem value="700-1000">₹700-1000</SelectItem>
+              <SelectItem value="1000+">₹1000+</SelectItem>
+            </SelectContent>
+          </Select>
+          
           <Button variant="outline" size="sm" onClick={clearSectionFilters}>
             Clear Filters
           </Button>
@@ -341,30 +403,17 @@ const CommunityFeed = ({
     } else if (activeTab === 'buy-sell') {
       return (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
-          <Select value={productFilters.category} onValueChange={(value) => setProductFilters(prev => ({ ...prev, category: value }))}>
+          <Select value={productFilters.itemType} onValueChange={(value) => setProductFilters(prev => ({ ...prev, itemType: value }))}>
             <SelectTrigger>
-              <SelectValue placeholder="Category" />
+              <SelectValue placeholder="Item Type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all-categories">All Categories</SelectItem>
-              <SelectItem value="electronics">Electronics</SelectItem>
-              <SelectItem value="furniture">Furniture</SelectItem>
-              <SelectItem value="books">Books</SelectItem>
-              <SelectItem value="clothing">Clothing</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <Select value={productFilters.condition} onValueChange={(value) => setProductFilters(prev => ({ ...prev, condition: value }))}>
-            <SelectTrigger>
-              <SelectValue placeholder="Condition" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all-conditions">All Conditions</SelectItem>
-              <SelectItem value="new">New</SelectItem>
-              <SelectItem value="like-new">Like New</SelectItem>
-              <SelectItem value="good">Good</SelectItem>
-              <SelectItem value="fair">Fair</SelectItem>
+              <SelectItem value="all-items">All Items</SelectItem>
+              <SelectItem value="Educational Items">Educational Items</SelectItem>
+              <SelectItem value="Electronics and Gadgets">Electronics and Gadgets</SelectItem>
+              <SelectItem value="Home & Kitchen Items">Home & Kitchen Items</SelectItem>
+              <SelectItem value="Vehicle">Vehicle</SelectItem>
+              <SelectItem value="Other">Other</SelectItem>
             </SelectContent>
           </Select>
           
@@ -373,6 +422,21 @@ const CommunityFeed = ({
             value={productFilters.location}
             onChange={(e) => setProductFilters(prev => ({ ...prev, location: e.target.value }))}
           />
+          
+          <Select value={productFilters.amount} onValueChange={(value) => setProductFilters(prev => ({ ...prev, amount: value }))}>
+            <SelectTrigger>
+              <SelectValue placeholder="Price Range" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all-amounts">All Prices</SelectItem>
+              <SelectItem value="100-500">₹100-500</SelectItem>
+              <SelectItem value="500-1000">₹500-1000</SelectItem>
+              <SelectItem value="1000-2000">₹1000-2000</SelectItem>
+              <SelectItem value="2000-5000">₹2000-5000</SelectItem>
+              <SelectItem value="5000-10000">₹5000-10000</SelectItem>
+              <SelectItem value="10000+">₹10000+</SelectItem>
+            </SelectContent>
+          </Select>
           
           <Button variant="outline" size="sm" onClick={clearSectionFilters}>
             Clear Filters

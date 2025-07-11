@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,12 +14,21 @@ interface AddServiceProps {
   user: User;
   onComplete: (listing: Omit<Listing, 'id' | 'userId' | 'user' | 'createdAt'>) => void;
   onBack: () => void;
+  existingListing?: Listing | null;
+  isEditing?: boolean;
 }
 
-const AddService = ({ user, onComplete, onBack }: AddServiceProps) => {
+const AddService = ({ user, onComplete, onBack, existingListing, isEditing = false }: AddServiceProps) => {
   const [serviceType, setServiceType] = useState<'accommodation' | 'proxy' | ''>('');
   const [formData, setFormData] = useState<any>({});
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (existingListing && isEditing) {
+      setServiceType(existingListing.type as 'accommodation' | 'proxy');
+      setFormData(existingListing.details || {});
+    }
+  }, [existingListing, isEditing]);
 
   const accommodationTypes = [
     'Flat (Permanent Stay)',
@@ -94,8 +103,8 @@ const AddService = ({ user, onComplete, onBack }: AddServiceProps) => {
     };
 
     toast({
-      title: "Service Added",
-      description: "Your service has been posted successfully",
+      title: isEditing ? "Service Updated" : "Service Added",
+      description: isEditing ? "Your service has been updated successfully" : "Your service has been posted successfully",
     });
 
     onComplete(listing);
@@ -109,7 +118,9 @@ const AddService = ({ user, onComplete, onBack }: AddServiceProps) => {
             <Button variant="ghost" onClick={onBack} className="mr-3">
               <ArrowLeft className="w-4 h-4" />
             </Button>
-            <h1 className="text-2xl font-bold text-gray-800">Add Service</h1>
+            <h1 className="text-2xl font-bold text-gray-800">
+              {isEditing ? 'Edit Service' : 'Add Service'}
+            </h1>
           </div>
 
           <div className="space-y-4">
@@ -152,7 +163,10 @@ const AddService = ({ user, onComplete, onBack }: AddServiceProps) => {
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <h1 className="text-2xl font-bold text-gray-800">
-            {serviceType === 'accommodation' ? 'Add Accommodation' : 'Add Proxy Service'}
+            {isEditing 
+              ? (serviceType === 'accommodation' ? 'Edit Accommodation' : 'Edit Proxy Service')
+              : (serviceType === 'accommodation' ? 'Add Accommodation' : 'Add Proxy Service')
+            }
           </h1>
         </div>
 
@@ -229,21 +243,39 @@ const AddService = ({ user, onComplete, onBack }: AddServiceProps) => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Rent Per Day</Label>
-                    <Input
-                      type="number"
-                      placeholder="₹ per day"
-                      value={formData.rentPerDay || ''}
-                      onChange={(e) => setFormData({...formData, rentPerDay: e.target.value})}
-                    />
+                    <Select 
+                      value={formData.rentPerDay || ''} 
+                      onValueChange={(value) => setFormData({...formData, rentPerDay: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select range" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="100-200">₹100-200</SelectItem>
+                        <SelectItem value="200-400">₹200-400</SelectItem>
+                        <SelectItem value="400-600">₹400-600</SelectItem>
+                        <SelectItem value="600-800">₹600-800</SelectItem>
+                        <SelectItem value="800-1000">₹800-1000</SelectItem>
+                        <SelectItem value="1000+">₹1000 and above</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label>Rent Per Month</Label>
-                    <Input
-                      type="number"
-                      placeholder="₹ per month"
-                      value={formData.rentPerMonth || ''}
-                      onChange={(e) => setFormData({...formData, rentPerMonth: e.target.value})}
-                    />
+                    <Select 
+                      value={formData.rentPerMonth || ''} 
+                      onValueChange={(value) => setFormData({...formData, rentPerMonth: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select range" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1500-2500">₹1500-2500</SelectItem>
+                        <SelectItem value="2500-3500">₹2500-3500</SelectItem>
+                        <SelectItem value="3500-4500">₹3500-4500</SelectItem>
+                        <SelectItem value="4500+">₹4500 and above</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
@@ -277,36 +309,31 @@ const AddService = ({ user, onComplete, onBack }: AddServiceProps) => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Location * (Select multiple)</Label>
-                  <div className="space-y-2 max-h-32 overflow-y-auto">
-                    {delhiDistricts.map((district) => (
-                      <div key={district} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={district}
-                          checked={(formData.locations || []).includes(district)}
-                          onCheckedChange={(checked) => {
-                            const current = formData.locations || [];
-                            if (checked) {
-                              setFormData({...formData, locations: [...current, district]});
-                            } else {
-                              setFormData({...formData, locations: current.filter((item: string) => item !== district)});
-                            }
-                          }}
-                        />
-                        <Label htmlFor={district}>{district}</Label>
-                      </div>
-                    ))}
-                  </div>
+                  <Label>Location *</Label>
+                  <Input
+                    placeholder="Enter location"
+                    value={formData.location || ''}
+                    onChange={(e) => setFormData({...formData, location: e.target.value})}
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label>Charge Per Service *</Label>
-                  <Input
-                    type="number"
-                    placeholder="Enter service charge"
-                    value={formData.charge || ''}
-                    onChange={(e) => setFormData({...formData, charge: e.target.value})}
-                  />
+                  <Select 
+                    value={formData.charge || ''} 
+                    onValueChange={(value) => setFormData({...formData, charge: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select charge range" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="100-200">₹100-200</SelectItem>
+                      <SelectItem value="200-500">₹200-500</SelectItem>
+                      <SelectItem value="500-700">₹500-700</SelectItem>
+                      <SelectItem value="700-1000">₹700-1000</SelectItem>
+                      <SelectItem value="1000+">₹1000 and above</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">
@@ -325,7 +352,7 @@ const AddService = ({ user, onComplete, onBack }: AddServiceProps) => {
               onClick={handleSubmit}
               className="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600"
             >
-              Post Service
+              {isEditing ? 'Update Service' : 'Post Service'}
             </Button>
           </CardContent>
         </Card>
