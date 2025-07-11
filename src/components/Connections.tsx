@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Search, UserPlus, UserMinus, ArrowLeft, User as UserIcon, Camera, Users, Edit, Trash2 } from 'lucide-react';
+import { Search, UserPlus, UserMinus, ArrowLeft, User as UserIcon, Camera, Users, Edit, Trash2, Eye } from 'lucide-react';
 import { User, Community } from '@/pages/Index';
 
 interface ConnectionsProps {
@@ -20,6 +20,7 @@ interface ConnectionsProps {
   isVisiting?: boolean;
   visitingCommunityName?: string;
   onDeleteProfile?: () => void;
+  onEditProfile?: () => void;
 }
 
 const Connections = ({ 
@@ -32,13 +33,16 @@ const Connections = ({
   appliedFilter,
   isVisiting = false,
   visitingCommunityName,
-  onDeleteProfile
+  onDeleteProfile,
+  onEditProfile
 }: ConnectionsProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showMutualConnections, setShowMutualConnections] = useState(false);
   const [selectedUserMutuals, setSelectedUserMutuals] = useState<User[]>([]);
   const [selectedUserName, setSelectedUserName] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showProfileView, setShowProfileView] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState<User | null>(null);
 
   // Mock community members with Malabar region names
   const communityMembers: User[] = [
@@ -88,7 +92,54 @@ const Connections = ({
     const matchesSearch = !searchTerm || 
       member.name.toLowerCase().includes(searchTerm.toLowerCase());
     const isNotCurrentUser = member.id !== user.id;
-    return matchesSearch && isNotCurrentUser;
+    
+    // Filter based on current community context
+    let belongsToCurrentCommunity = true;
+    if (appliedFilter) {
+      // Parse filter to determine community criteria
+      if (appliedFilter.includes(' - ')) {
+        // District-level filter like "Malappuram - Delhi"
+        const [homeDistrict, currentLocation] = appliedFilter.split(' - ');
+        belongsToCurrentCommunity = member.homeDistrict === homeDistrict && 
+          (member.currentState === currentLocation || member.currentDistrict === currentLocation);
+      } else if (appliedFilter.includes(' in ')) {
+        // State-level filter like "Keralites in Delhi"
+        const parts = appliedFilter.split(' in ');
+        const homeStateMap: { [key: string]: string } = {
+          'Keralites': 'Kerala',
+          'Tamilians': 'Tamil Nadu',
+          'Delhites': 'Delhi'
+        };
+        const homeState = homeStateMap[parts[0]] || parts[0];
+        const currentState = parts[1];
+        
+        belongsToCurrentCommunity = member.homeState === homeState && member.currentState === currentState;
+      }
+    } else if (isVisiting && visitingCommunityName) {
+      // Filter for visiting community
+      if (visitingCommunityName.includes(' in ')) {
+        const parts = visitingCommunityName.split(' in ');
+        const homeStateMap: { [key: string]: string } = {
+          'Keralites': 'Kerala',
+          'Tamilians': 'Tamil Nadu',
+          'Delhites': 'Delhi'
+        };
+        const homeState = homeStateMap[parts[0]] || parts[0];
+        const currentState = parts[1];
+        
+        belongsToCurrentCommunity = member.homeState === homeState && member.currentState === currentState;
+      } else {
+        belongsToCurrentCommunity = member.homeState === visitingCommunityName && member.currentState === visitingCommunityName;
+      }
+    } else {
+      // Default to user's own community
+      belongsToCurrentCommunity = member.homeState === user.homeState && 
+        member.homeDistrict === user.homeDistrict &&
+        member.currentState === user.currentState && 
+        member.currentDistrict === user.currentDistrict;
+    }
+    
+    return matchesSearch && isNotCurrentUser && belongsToCurrentCommunity;
   });
 
   const isConnected = (memberId: string) => {
@@ -104,11 +155,18 @@ const Connections = ({
   };
 
   const getMutualConnections = (memberId: string): User[] => {
-    // Get actual mutual connections (connections that are connected to both users)
-    const mutuals = connections.filter(conn => {
-      // Don't include the current user or the member we're checking
-      return conn.id !== user.id && conn.id !== memberId;
+    // Get actual mutual connections from community members who are connected to both users
+    const mutuals = communityMembers.filter(member => {
+      // Must be connected to current user and not be the member we're checking
+      const isConnectedToCurrentUser = connections.some(conn => conn.id === member.id);
+      const isNotTheMemberWeAreChecking = member.id !== memberId;
+      const isNotCurrentUser = member.id !== user.id;
+      
+      // For demo purposes, we'll simulate that some members are mutual connections
+      // In a real app, you'd check if this member is also connected to the target member
+      return isConnectedToCurrentUser && isNotTheMemberWeAreChecking && isNotCurrentUser;
     });
+    
     return mutuals.slice(0, 2); // Limit to 2 for demo
   };
 
@@ -117,6 +175,11 @@ const Connections = ({
     setSelectedUserMutuals(mutuals);
     setSelectedUserName(member.name);
     setShowMutualConnections(true);
+  };
+
+  const handleViewProfile = (member: User) => {
+    setSelectedProfile(member);
+    setShowProfileView(true);
   };
 
   // Generate community name for "My Circle" section
@@ -145,6 +208,12 @@ const Connections = ({
     setShowDeleteConfirm(false);
   };
 
+  const handleEditProfile = () => {
+    if (onEditProfile) {
+      onEditProfile();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
       {/* Header */}
@@ -162,6 +231,7 @@ const Connections = ({
                 variant="outline"
                 size="sm"
                 className="flex items-center space-x-2"
+                onClick={handleEditProfile}
               >
                 <Edit className="w-4 h-4" />
                 <span>Edit</span>
@@ -279,24 +349,35 @@ const Connections = ({
                         </div>
                       </div>
                       
-                      <Button
-                        onClick={() => handleToggleConnection(member)}
-                        variant={isConnected(member.id) ? "destructive" : "default"}
-                        size="sm"
-                        className="flex items-center space-x-2"
-                      >
-                        {isConnected(member.id) ? (
-                          <>
-                            <UserMinus className="w-4 h-4" />
-                            <span>Remove</span>
-                          </>
-                        ) : (
-                          <>
-                            <UserPlus className="w-4 h-4" />
-                            <span>Connect</span>
-                          </>
-                        )}
-                      </Button>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewProfile(member)}
+                          className="flex items-center space-x-2"
+                        >
+                          <Eye className="w-4 h-4" />
+                          <span>View</span>
+                        </Button>
+                        <Button
+                          onClick={() => handleToggleConnection(member)}
+                          variant={isConnected(member.id) ? "destructive" : "default"}
+                          size="sm"
+                          className="flex items-center space-x-2"
+                        >
+                          {isConnected(member.id) ? (
+                            <>
+                              <UserMinus className="w-4 h-4" />
+                              <span>Remove</span>
+                            </>
+                          ) : (
+                            <>
+                              <UserPlus className="w-4 h-4" />
+                              <span>Connect</span>
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -329,14 +410,24 @@ const Connections = ({
                           </div>
                         </div>
                       </div>
-                      <Button
-                        onClick={() => onRemoveConnection(connection.id)}
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <UserMinus className="w-4 h-4" />
-                      </Button>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewProfile(connection)}
+                          className="flex items-center space-x-2"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          onClick={() => onRemoveConnection(connection.id)}
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <UserMinus className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -345,6 +436,53 @@ const Connections = ({
           </div>
         )}
       </div>
+
+      {/* Profile View Dialog */}
+      <Dialog open={showProfileView} onOpenChange={setShowProfileView}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Profile Details</DialogTitle>
+          </DialogHeader>
+          {selectedProfile && (
+            <div className="space-y-4">
+              <div className="flex flex-col items-center text-center">
+                <Avatar className="w-20 h-20 mb-3">
+                  <AvatarImage src="" />
+                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-green-500 text-white text-lg">
+                    {selectedProfile.name.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <h3 className="text-xl font-semibold text-gray-800">{selectedProfile.name}</h3>
+                <div className="flex items-center space-x-2 mt-2">
+                  <Badge variant="outline">{selectedProfile.gender}</Badge>
+                  <Badge variant="outline">{selectedProfile.designation}</Badge>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-sm font-medium text-gray-700">Home Location</p>
+                  <p className="text-gray-600">{selectedProfile.homeDistrict}, {selectedProfile.homeState}</p>
+                </div>
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-sm font-medium text-gray-700">Current Location</p>
+                  <p className="text-gray-600">{selectedProfile.currentDistrict}, {selectedProfile.currentState}</p>
+                </div>
+              </div>
+              
+              <div className="flex space-x-2">
+                <Button
+                  onClick={() => handleToggleConnection(selectedProfile)}
+                  variant={isConnected(selectedProfile.id) ? "destructive" : "default"}
+                  className="flex-1"
+                >
+                  {isConnected(selectedProfile.id) ? 'Remove Connection' : 'Connect'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Mutual Connections Dialog */}
       <Dialog open={showMutualConnections} onOpenChange={setShowMutualConnections}>

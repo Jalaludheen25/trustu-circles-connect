@@ -55,6 +55,7 @@ const Index = () => {
     currentState: string;
     currentDistrict: string;
   } | null>(null);
+  const [editingListing, setEditingListing] = useState<Listing | null>(null);
 
   // Load data from localStorage on mount
   useEffect(() => {
@@ -156,16 +157,43 @@ const Index = () => {
   const handleAddListing = (listing: Omit<Listing, 'id' | 'userId' | 'user' | 'createdAt'>) => {
     if (!user) return;
     
-    const newListing: Listing = {
-      ...listing,
-      id: Date.now().toString(),
-      userId: user.id,
-      user: user,
-      createdAt: new Date()
-    };
+    if (editingListing) {
+      // Update existing listing
+      const updatedListing: Listing = {
+        ...editingListing,
+        ...listing,
+        user: user
+      };
+      
+      setListings(prev => prev.map(l => l.id === editingListing.id ? updatedListing : l));
+      setEditingListing(null);
+    } else {
+      // Create new listing
+      const newListing: Listing = {
+        ...listing,
+        id: Date.now().toString(),
+        userId: user.id,
+        user: user,
+        createdAt: new Date()
+      };
+      
+      setListings(prev => [newListing, ...prev]);
+    }
     
-    setListings(prev => [newListing, ...prev]);
     setCurrentStep('feed');
+  };
+
+  const handleEditListing = (listing: Listing) => {
+    setEditingListing(listing);
+    if (listing.type === 'product') {
+      setCurrentStep('sell-product');
+    } else {
+      setCurrentStep('add-service');
+    }
+  };
+
+  const handleEditProfile = () => {
+    setCurrentStep('profile');
   };
 
   const handleDeleteListing = (listingId: string) => {
@@ -215,7 +243,14 @@ const Index = () => {
       case 'signin':
         return <SignIn onSignIn={handleSignIn} />;
       case 'profile':
-        return <ProfileCreation onComplete={handleProfileCreation} />;
+        return (
+          <ProfileCreation 
+            onComplete={editingListing ? () => setCurrentStep('feed') : handleProfileCreation}
+            user={user}
+            isEditing={!!user && currentStep === 'profile'}
+            onUpdateUser={setUser}
+          />
+        );
       case 'join-community':
         return <JoinCommunity onComplete={handleJoinCommunity} user={user} />;
       case 'feed':
@@ -236,6 +271,7 @@ const Index = () => {
             onBackToMyCommunity={handleBackToMyCommunity}
             onVisitCommunity={handleVisitCommunity}
             onDeleteListing={handleDeleteListing}
+            onEditListing={handleEditListing}
           />
         );
       case 'add-service':
@@ -244,6 +280,8 @@ const Index = () => {
             user={user!}
             onComplete={handleAddListing}
             onBack={() => setCurrentStep('feed')}
+            existingListing={editingListing}
+            isEditing={!!editingListing}
           />
         );
       case 'sell-product':
@@ -252,6 +290,8 @@ const Index = () => {
             user={user!}
             onComplete={handleAddListing}
             onBack={() => setCurrentStep('feed')}
+            existingListing={editingListing}
+            isEditing={!!editingListing}
           />
         );
       case 'connections':
@@ -269,6 +309,7 @@ const Index = () => {
               ? generateVisitingCommunityName(visitingCommunityData.homeState, visitingCommunityData.currentState)
               : ''}
             onDeleteProfile={handleDeleteProfile}
+            onEditProfile={handleEditProfile}
           />
         );
       default:

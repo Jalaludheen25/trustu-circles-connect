@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Filter, User as UserIcon, Plus, Search, Phone, MessageCircle, MapPin, Users, Eye, Edit, Trash2 } from 'lucide-react';
 import { User, Community, Listing } from '@/pages/Index';
 import CommunityFilter from './CommunityFilter';
@@ -22,6 +23,7 @@ interface CommunityFeedProps {
   onBackToMyCommunity?: () => void;
   onVisitCommunity?: (homeState: string, homeDistrict: string, currentState: string, currentDistrict: string) => void;
   onDeleteListing?: (listingId: string) => void;
+  onEditListing?: (listing: Listing) => void;
 }
 
 const CommunityFeed = ({ 
@@ -35,12 +37,34 @@ const CommunityFeed = ({
   visitingCommunityName,
   onBackToMyCommunity,
   onVisitCommunity,
-  onDeleteListing
+  onDeleteListing,
+  onEditListing
 }: CommunityFeedProps) => {
   const [activeTab, setActiveTab] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilter, setShowFilter] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; listing: Listing | null }>({ show: false, listing: null });
+  
+  // Section-specific filters
+  const [accommodationFilters, setAccommodationFilters] = useState({
+    type: '',
+    location: '',
+    availableFor: '',
+    priceRange: ''
+  });
+  
+  const [proxyFilters, setProxyFilters] = useState({
+    serviceType: '',
+    location: '',
+    urgency: ''
+  });
+  
+  const [productFilters, setProductFilters] = useState({
+    category: '',
+    condition: '',
+    priceRange: '',
+    location: ''
+  });
 
   // Function to check if a user belongs to the current community context
   const userBelongsToCommunity = (listingUser: User, homeState: string, homeDistrict: string, currentState: string, currentDistrict: string) => {
@@ -89,8 +113,39 @@ const CommunityFeed = ({
         user.currentDistrict
       );
     }
+
+    // Apply section-specific filters
+    let matchesSectionFilter = true;
+    if (activeTab === 'accommodation' && listing.type === 'accommodation') {
+      if (accommodationFilters.type && !listing.details?.accommodationType?.toLowerCase().includes(accommodationFilters.type.toLowerCase())) {
+        matchesSectionFilter = false;
+      }
+      if (accommodationFilters.location && !listing.location.toLowerCase().includes(accommodationFilters.location.toLowerCase())) {
+        matchesSectionFilter = false;
+      }
+      if (accommodationFilters.availableFor && !listing.details?.availableFor?.toLowerCase().includes(accommodationFilters.availableFor.toLowerCase())) {
+        matchesSectionFilter = false;
+      }
+    } else if (activeTab === 'proxy' && listing.type === 'proxy') {
+      if (proxyFilters.serviceType && !listing.details?.serviceType?.toLowerCase().includes(proxyFilters.serviceType.toLowerCase())) {
+        matchesSectionFilter = false;
+      }
+      if (proxyFilters.location && !listing.location.toLowerCase().includes(proxyFilters.location.toLowerCase())) {
+        matchesSectionFilter = false;
+      }
+    } else if (activeTab === 'buy-sell' && listing.type === 'product') {
+      if (productFilters.category && !listing.details?.category?.toLowerCase().includes(productFilters.category.toLowerCase())) {
+        matchesSectionFilter = false;
+      }
+      if (productFilters.condition && !listing.details?.condition?.toLowerCase().includes(productFilters.condition.toLowerCase())) {
+        matchesSectionFilter = false;
+      }
+      if (productFilters.location && !listing.location.toLowerCase().includes(productFilters.location.toLowerCase())) {
+        matchesSectionFilter = false;
+      }
+    }
     
-    return matchesSearch && matchesTab && belongsToCommunity;
+    return matchesSearch && matchesTab && belongsToCommunity && matchesSectionFilter;
   });
 
   const handleContact = (contact: string) => {
@@ -145,6 +200,35 @@ const CommunityFeed = ({
         }
       });
       return uniqueUsers.size;
+    } else if (appliedFilter) {
+      // For filtered communities, count based on filter
+      const uniqueUsers = new Set();
+      listings.forEach(listing => {
+        // Parse filter to determine community criteria
+        if (appliedFilter.includes(' - ')) {
+          // District-level filter like "Malappuram - Delhi"
+          const [homeDistrict, currentLocation] = appliedFilter.split(' - ');
+          if (listing.user.homeDistrict === homeDistrict && 
+              (listing.user.currentState === currentLocation || listing.user.currentDistrict === currentLocation)) {
+            uniqueUsers.add(listing.user.id);
+          }
+        } else if (appliedFilter.includes(' in ')) {
+          // State-level filter like "Keralites in Delhi"
+          const parts = appliedFilter.split(' in ');
+          const homeStateMap: { [key: string]: string } = {
+            'Keralites': 'Kerala',
+            'Tamilians': 'Tamil Nadu',
+            'Delhites': 'Delhi'
+          };
+          const homeState = homeStateMap[parts[0]] || parts[0];
+          const currentState = parts[1];
+          
+          if (listing.user.homeState === homeState && listing.user.currentState === currentState) {
+            uniqueUsers.add(listing.user.id);
+          }
+        }
+      });
+      return uniqueUsers.size;
     } else {
       // For user's own community, count unique users including themselves
       const uniqueUsers = new Set([user.id]);
@@ -174,6 +258,130 @@ const CommunityFeed = ({
     if (!listing) return "Are you sure you want to delete this?";
     if (listing.type === 'product') return "Are you sure you want to delete this product listing?";
     return "Are you sure you want to delete this service?";
+  };
+
+  const handleEditListing = (listing: Listing) => {
+    if (onEditListing) {
+      onEditListing(listing);
+    }
+  };
+
+  const clearSectionFilters = () => {
+    setAccommodationFilters({ type: '', location: '', availableFor: '', priceRange: '' });
+    setProxyFilters({ serviceType: '', location: '', urgency: '' });
+    setProductFilters({ category: '', condition: '', priceRange: '', location: '' });
+  };
+
+  const renderSectionFilters = () => {
+    if (activeTab === 'accommodation') {
+      return (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
+          <Select value={accommodationFilters.type} onValueChange={(value) => setAccommodationFilters(prev => ({ ...prev, type: value }))}>
+            <SelectTrigger>
+              <SelectValue placeholder="Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Types</SelectItem>
+              <SelectItem value="single">Single Room</SelectItem>
+              <SelectItem value="shared">Shared Room</SelectItem>
+              <SelectItem value="apartment">Apartment</SelectItem>
+              <SelectItem value="pg">PG</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Input
+            placeholder="Location"
+            value={accommodationFilters.location}
+            onChange={(e) => setAccommodationFilters(prev => ({ ...prev, location: e.target.value }))}
+          />
+          
+          <Select value={accommodationFilters.availableFor} onValueChange={(value) => setAccommodationFilters(prev => ({ ...prev, availableFor: value }))}>
+            <SelectTrigger>
+              <SelectValue placeholder="Available For" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All</SelectItem>
+              <SelectItem value="male">Male</SelectItem>
+              <SelectItem value="female">Female</SelectItem>
+              <SelectItem value="family">Family</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Button variant="outline" size="sm" onClick={clearSectionFilters}>
+            Clear Filters
+          </Button>
+        </div>
+      );
+    } else if (activeTab === 'proxy') {
+      return (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-4">
+          <Select value={proxyFilters.serviceType} onValueChange={(value) => setProxyFilters(prev => ({ ...prev, serviceType: value }))}>
+            <SelectTrigger>
+              <SelectValue placeholder="Service Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Services</SelectItem>
+              <SelectItem value="document">Document Service</SelectItem>
+              <SelectItem value="delivery">Delivery</SelectItem>
+              <SelectItem value="queue">Queue Service</SelectItem>
+              <SelectItem value="other">Other</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Input
+            placeholder="Location"
+            value={proxyFilters.location}
+            onChange={(e) => setProxyFilters(prev => ({ ...prev, location: e.target.value }))}
+          />
+          
+          <Button variant="outline" size="sm" onClick={clearSectionFilters}>
+            Clear Filters
+          </Button>
+        </div>
+      );
+    } else if (activeTab === 'buy-sell') {
+      return (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
+          <Select value={productFilters.category} onValueChange={(value) => setProductFilters(prev => ({ ...prev, category: value }))}>
+            <SelectTrigger>
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Categories</SelectItem>
+              <SelectItem value="electronics">Electronics</SelectItem>
+              <SelectItem value="furniture">Furniture</SelectItem>
+              <SelectItem value="books">Books</SelectItem>
+              <SelectItem value="clothing">Clothing</SelectItem>
+              <SelectItem value="other">Other</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Select value={productFilters.condition} onValueChange={(value) => setProductFilters(prev => ({ ...prev, condition: value }))}>
+            <SelectTrigger>
+              <SelectValue placeholder="Condition" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Conditions</SelectItem>
+              <SelectItem value="new">New</SelectItem>
+              <SelectItem value="like-new">Like New</SelectItem>
+              <SelectItem value="good">Good</SelectItem>
+              <SelectItem value="fair">Fair</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Input
+            placeholder="Location"
+            value={productFilters.location}
+            onChange={(e) => setProductFilters(prev => ({ ...prev, location: e.target.value }))}
+          />
+          
+          <Button variant="outline" size="sm" onClick={clearSectionFilters}>
+            Clear Filters
+          </Button>
+        </div>
+      );
+    }
+    return null;
   };
 
   return (
@@ -249,6 +457,9 @@ const CommunityFeed = ({
               className="pl-10"
             />
           </div>
+
+          {/* Section-specific filters */}
+          {renderSectionFilters()}
         </div>
       </div>
 
@@ -297,6 +508,7 @@ const CommunityFeed = ({
                             variant="ghost"
                             size="sm"
                             className="p-1 h-8 w-8"
+                            onClick={() => handleEditListing(listing)}
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
