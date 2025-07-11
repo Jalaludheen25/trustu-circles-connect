@@ -37,6 +37,14 @@ const CommunityFeed = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilter, setShowFilter] = useState(false);
 
+  // Function to check if a user belongs to the current community context
+  const userBelongsToCommunity = (listingUser: User, homeState: string, homeDistrict: string, currentState: string, currentDistrict: string) => {
+    return listingUser.homeState === homeState && 
+           listingUser.homeDistrict === homeDistrict &&
+           listingUser.currentState === currentState && 
+           listingUser.currentDistrict === currentDistrict;
+  };
+
   const filteredListings = listings.filter(listing => {
     const matchesSearch = !searchTerm || 
       listing.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -48,7 +56,41 @@ const CommunityFeed = ({
       (activeTab === 'proxy' && listing.type === 'proxy') ||
       (activeTab === 'buy-sell' && listing.type === 'product');
     
-    return matchesSearch && matchesTab;
+    // Filter listings based on community membership
+    let belongsToCommunity = false;
+    
+    if (isVisiting && visitingCommunityName) {
+      // Extract community info from visiting community name
+      // For "Keralites in Delhi" format
+      if (visitingCommunityName.includes(' in ')) {
+        const parts = visitingCommunityName.split(' in ');
+        const homeStateMap: { [key: string]: string } = {
+          'Keralites': 'Kerala',
+          'Tamilians': 'Tamil Nadu',
+          'Delhites': 'Delhi'
+        };
+        const homeState = homeStateMap[parts[0]] || parts[0];
+        const currentState = parts[1];
+        
+        // For visiting communities, we need to check if the listing user belongs to that specific community
+        // This would require more specific filtering logic based on your community data structure
+        belongsToCommunity = listing.user.homeState === homeState && listing.user.currentState === currentState;
+      } else {
+        // Single state community like "Kerala"
+        belongsToCommunity = listing.user.homeState === visitingCommunityName && listing.user.currentState === visitingCommunityName;
+      }
+    } else {
+      // For user's own community
+      belongsToCommunity = userBelongsToCommunity(
+        listing.user, 
+        user.homeState, 
+        user.homeDistrict, 
+        user.currentState, 
+        user.currentDistrict
+      );
+    }
+    
+    return matchesSearch && matchesTab && belongsToCommunity;
   });
 
   const handleContact = (contact: string) => {
@@ -78,6 +120,9 @@ const CommunityFeed = ({
 
   const displayCommunityName = isVisiting ? visitingCommunityName : (appliedFilter || community.name);
 
+  // Calculate real member count - for visited communities, this would need actual member data
+  const memberCount = isVisiting ? 1 : community.members.length;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
       {/* Header */}
@@ -89,7 +134,7 @@ const CommunityFeed = ({
               <div>
                 <h1 className="text-xl font-bold text-gray-800">{displayCommunityName}</h1>
                 <div className="flex items-center space-x-2">
-                  <p className="text-sm text-gray-600">{community.members.length} member{community.members.length !== 1 ? 's' : ''}</p>
+                  <p className="text-sm text-gray-600">{memberCount} member{memberCount !== 1 ? 's' : ''}</p>
                   {(appliedFilter || isVisiting) && (
                     <Badge variant="secondary" className="text-xs">
                       {isVisiting ? 'Visiting' : 'Filtered View'}
@@ -126,7 +171,7 @@ const CommunityFeed = ({
                 className="flex items-center space-x-2"
               >
                 <UserIcon className="w-4 h-4" />
-                <span>Profile</span>
+                <span>My Profile</span>
               </Button>
             </div>
           </div>

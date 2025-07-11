@@ -246,6 +246,11 @@ const Index = () => {
             onAddConnection={handleAddConnection}
             onRemoveConnection={handleRemoveConnection}
             onBack={() => setCurrentStep('feed')}
+            appliedFilter={appliedFilter}
+            isVisiting={isVisitingCommunity}
+            visitingCommunityName={visitingCommunityData 
+              ? generateVisitingCommunityName(visitingCommunityData.homeState, visitingCommunityData.currentState)
+              : ''}
           />
         );
       default:

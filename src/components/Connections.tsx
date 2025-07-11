@@ -4,7 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Search, UserPlus, UserMinus, ArrowLeft, User as UserIcon } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Search, UserPlus, UserMinus, ArrowLeft, User as UserIcon, Camera, Users } from 'lucide-react';
 import { User, Community } from '@/pages/Index';
 
 interface ConnectionsProps {
@@ -14,10 +16,26 @@ interface ConnectionsProps {
   onAddConnection: (user: User) => void;
   onRemoveConnection: (userId: string) => void;
   onBack: () => void;
+  appliedFilter?: string;
+  isVisiting?: boolean;
+  visitingCommunityName?: string;
 }
 
-const Connections = ({ user, community, connections, onAddConnection, onRemoveConnection, onBack }: ConnectionsProps) => {
+const Connections = ({ 
+  user, 
+  community, 
+  connections, 
+  onAddConnection, 
+  onRemoveConnection, 
+  onBack,
+  appliedFilter,
+  isVisiting = false,
+  visitingCommunityName
+}: ConnectionsProps) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [showMutualConnections, setShowMutualConnections] = useState(false);
+  const [selectedUserMutuals, setSelectedUserMutuals] = useState<User[]>([]);
+  const [selectedUserName, setSelectedUserName] = useState('');
 
   // Mock community members (in a real app, this would come from an API)
   const communityMembers: User[] = [
@@ -72,6 +90,34 @@ const Connections = ({ user, community, connections, onAddConnection, onRemoveCo
     }
   };
 
+  const getMutualConnections = (memberId: string): User[] => {
+    // Mock mutual connections logic - in real app, this would be calculated from actual data
+    const mockMutuals = connections.filter(conn => Math.random() > 0.5).slice(0, 2);
+    return mockMutuals;
+  };
+
+  const handleShowMutuals = (member: User) => {
+    const mutuals = getMutualConnections(member.id);
+    setSelectedUserMutuals(mutuals);
+    setSelectedUserName(member.name);
+    setShowMutualConnections(true);
+  };
+
+  // Generate community name for "My Circle" section
+  const getCurrentCommunityName = () => {
+    if (isVisiting && visitingCommunityName) {
+      return visitingCommunityName;
+    }
+    
+    if (appliedFilter) {
+      return appliedFilter;
+    }
+    
+    return community.name;
+  };
+
+  const currentCommunityName = getCurrentCommunityName();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
       {/* Header */}
@@ -81,11 +127,58 @@ const Connections = ({ user, community, connections, onAddConnection, onRemoveCo
             <Button variant="ghost" size="sm" onClick={onBack}>
               <ArrowLeft className="w-4 h-4" />
             </Button>
-            <h1 className="text-xl font-bold text-gray-800">My Circle</h1>
+            <h1 className="text-xl font-bold text-gray-800">My Profile</h1>
+          </div>
+        </div>
+      </div>
+
+      {/* Profile Section */}
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        <Card className="mb-6">
+          <CardContent className="p-6">
+            <div className="flex flex-col items-center text-center mb-6">
+              {/* Profile Photo */}
+              <div className="relative mb-4">
+                <Avatar className="w-24 h-24">
+                  <AvatarImage src="" />
+                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-green-500 text-white text-xl">
+                    {user.name.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0"
+                  onClick={() => {/* Handle photo edit */}}
+                >
+                  <Camera className="w-4 h-4" />
+                </Button>
+              </div>
+              
+              {/* User Info */}
+              <h2 className="text-xl font-semibold text-gray-800 mb-2">{user.name}</h2>
+              <div className="flex items-center space-x-2 mb-2">
+                <Badge variant="outline">{user.gender}</Badge>
+                <Badge variant="outline">{user.designation}</Badge>
+              </div>
+              <p className="text-sm text-gray-600">
+                {user.homeDistrict}, {user.homeState} → {user.currentDistrict}, {user.currentState}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* My Circle Section */}
+        <div className="mb-4">
+          <div className="flex items-center space-x-2 mb-4">
+            <Users className="w-5 h-5 text-blue-500" />
+            <h2 className="text-lg font-semibold text-gray-800">
+              My Circle <span className="text-sm font-normal text-gray-500">({currentCommunityName})</span>
+            </h2>
           </div>
 
           {/* Search Bar */}
-          <div className="relative">
+          <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
               placeholder="Search community members..."
@@ -95,58 +188,72 @@ const Connections = ({ user, community, connections, onAddConnection, onRemoveCo
             />
           </div>
         </div>
-      </div>
 
-      {/* Members List */}
-      <div className="max-w-4xl mx-auto px-4 py-6">
+        {/* Members List */}
         <div className="space-y-4">
           {filteredMembers.length === 0 ? (
             <Card className="p-8 text-center">
               <p className="text-gray-500">No community members found.</p>
             </Card>
           ) : (
-            filteredMembers.map((member) => (
-              <Card key={member.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-green-500 rounded-full flex items-center justify-center">
-                        <UserIcon className="w-6 h-6 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-800">{member.name}</h3>
-                        <div className="flex items-center space-x-2 mt-1">
-                          <Badge variant="outline">{member.gender}</Badge>
-                          <Badge variant="outline">{member.designation}</Badge>
+            filteredMembers.map((member) => {
+              const mutualCount = getMutualConnections(member.id).length;
+              return (
+                <Card key={member.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <Avatar className="w-12 h-12">
+                          <AvatarImage src="" />
+                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-green-500 text-white">
+                            {member.name.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <h3 className="font-semibold text-gray-800">{member.name}</h3>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <Badge variant="outline">{member.gender}</Badge>
+                            <Badge variant="outline">{member.designation}</Badge>
+                          </div>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {member.homeDistrict}, {member.homeState} → {member.currentDistrict}, {member.currentState}
+                          </p>
+                          {mutualCount > 0 && (
+                            <Button
+                              variant="link"
+                              size="sm"
+                              className="p-0 h-auto text-xs text-blue-600"
+                              onClick={() => handleShowMutuals(member)}
+                            >
+                              {mutualCount} mutual connection{mutualCount !== 1 ? 's' : ''}
+                            </Button>
+                          )}
                         </div>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {member.homeDistrict}, {member.homeState} → {member.currentDistrict}, {member.currentState}
-                        </p>
                       </div>
+                      
+                      <Button
+                        onClick={() => handleToggleConnection(member)}
+                        variant={isConnected(member.id) ? "destructive" : "default"}
+                        size="sm"
+                        className="flex items-center space-x-2"
+                      >
+                        {isConnected(member.id) ? (
+                          <>
+                            <UserMinus className="w-4 h-4" />
+                            <span>Remove</span>
+                          </>
+                        ) : (
+                          <>
+                            <UserPlus className="w-4 h-4" />
+                            <span>Connect</span>
+                          </>
+                        )}
+                      </Button>
                     </div>
-                    
-                    <Button
-                      onClick={() => handleToggleConnection(member)}
-                      variant={isConnected(member.id) ? "destructive" : "default"}
-                      size="sm"
-                      className="flex items-center space-x-2"
-                    >
-                      {isConnected(member.id) ? (
-                        <>
-                          <UserMinus className="w-4 h-4" />
-                          <span>Remove</span>
-                        </>
-                      ) : (
-                        <>
-                          <UserPlus className="w-4 h-4" />
-                          <span>Connect</span>
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
+                  </CardContent>
+                </Card>
+              );
+            })
           )}
         </div>
 
@@ -160,9 +267,12 @@ const Connections = ({ user, community, connections, onAddConnection, onRemoveCo
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-green-500 rounded-full flex items-center justify-center">
-                          <UserIcon className="w-5 h-5 text-white" />
-                        </div>
+                        <Avatar className="w-10 h-10">
+                          <AvatarImage src="" />
+                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-green-500 text-white">
+                            {connection.name.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
                         <div>
                           <h4 className="font-medium text-gray-800">{connection.name}</h4>
                           <div className="flex items-center space-x-2">
@@ -187,6 +297,38 @@ const Connections = ({ user, community, connections, onAddConnection, onRemoveCo
           </div>
         )}
       </div>
+
+      {/* Mutual Connections Dialog */}
+      <Dialog open={showMutualConnections} onOpenChange={setShowMutualConnections}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Mutual Connections with {selectedUserName}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            {selectedUserMutuals.length === 0 ? (
+              <p className="text-gray-500 text-center py-4">No mutual connections found.</p>
+            ) : (
+              selectedUserMutuals.map((mutual) => (
+                <div key={mutual.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                  <Avatar className="w-10 h-10">
+                    <AvatarImage src="" />
+                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-green-500 text-white">
+                      {mutual.name.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h4 className="font-medium text-gray-800">{mutual.name}</h4>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="secondary" className="text-xs">{mutual.gender}</Badge>
+                      <Badge variant="secondary" className="text-xs">{mutual.designation}</Badge>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
