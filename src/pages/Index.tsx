@@ -48,6 +48,13 @@ const Index = () => {
   const [listings, setListings] = useState<Listing[]>([]);
   const [connections, setConnections] = useState<User[]>([]);
   const [appliedFilter, setAppliedFilter] = useState<string>('');
+  const [isVisitingCommunity, setIsVisitingCommunity] = useState(false);
+  const [visitingCommunityData, setVisitingCommunityData] = useState<{
+    homeState: string;
+    homeDistrict: string;
+    currentState: string;
+    currentDistrict: string;
+  } | null>(null);
 
   // Load data from localStorage on mount
   useEffect(() => {
@@ -107,6 +114,21 @@ const Index = () => {
     return `${homePeople} in ${userData.currentState}`;
   };
 
+  const generateVisitingCommunityName = (homeState: string, currentState: string) => {
+    if (homeState === currentState) {
+      return homeState;
+    }
+    
+    const homeStateMap: { [key: string]: string } = {
+      'Kerala': 'Keralites',
+      'Tamil Nadu': 'Tamilians',
+      'Delhi': 'Delhites'
+    };
+    
+    const homePeople = homeStateMap[homeState] || homeState;
+    return `${homePeople} in ${currentState}`;
+  };
+
   const handleSignIn = (userData: Partial<User>) => {
     if (userData.name) {
       setCurrentStep('join-community');
@@ -158,6 +180,18 @@ const Index = () => {
     setAppliedFilter(filter);
   };
 
+  const handleVisitCommunity = (homeState: string, homeDistrict: string, currentState: string, currentDistrict: string) => {
+    setVisitingCommunityData({ homeState, homeDistrict, currentState, currentDistrict });
+    setIsVisitingCommunity(true);
+    setAppliedFilter(''); // Clear any existing filters
+  };
+
+  const handleBackToMyCommunity = () => {
+    setIsVisitingCommunity(false);
+    setVisitingCommunityData(null);
+    setAppliedFilter('');
+  };
+
   const renderCurrentStep = () => {
     switch (currentStep) {
       case 'landing':
@@ -169,6 +203,10 @@ const Index = () => {
       case 'join-community':
         return <JoinCommunity onComplete={handleJoinCommunity} user={user} />;
       case 'feed':
+        const visitingCommunityName = visitingCommunityData 
+          ? generateVisitingCommunityName(visitingCommunityData.homeState, visitingCommunityData.currentState)
+          : '';
+        
         return (
           <CommunityFeed
             user={user!}
@@ -177,6 +215,10 @@ const Index = () => {
             onNavigate={setCurrentStep}
             appliedFilter={appliedFilter}
             onFilterApplied={handleFilterApplied}
+            isVisiting={isVisitingCommunity}
+            visitingCommunityName={visitingCommunityName}
+            onBackToMyCommunity={handleBackToMyCommunity}
+            onVisitCommunity={handleVisitCommunity}
           />
         );
       case 'add-service':

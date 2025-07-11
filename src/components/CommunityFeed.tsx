@@ -1,11 +1,10 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Filter, User as UserIcon, Plus, Search, Phone, MessageCircle, MapPin, Users } from 'lucide-react';
+import { Filter, User as UserIcon, Plus, Search, Phone, MessageCircle, MapPin, Users, Eye } from 'lucide-react';
 import { User, Community, Listing } from '@/pages/Index';
 import CommunityFilter from './CommunityFilter';
 
@@ -16,9 +15,24 @@ interface CommunityFeedProps {
   onNavigate: (step: string) => void;
   appliedFilter?: string;
   onFilterApplied?: (filter: string) => void;
+  isVisiting?: boolean;
+  visitingCommunityName?: string;
+  onBackToMyCommunity?: () => void;
+  onVisitCommunity?: (homeState: string, homeDistrict: string, currentState: string, currentDistrict: string) => void;
 }
 
-const CommunityFeed = ({ user, community, listings, onNavigate, appliedFilter, onFilterApplied }: CommunityFeedProps) => {
+const CommunityFeed = ({ 
+  user, 
+  community, 
+  listings, 
+  onNavigate, 
+  appliedFilter, 
+  onFilterApplied,
+  isVisiting = false,
+  visitingCommunityName,
+  onBackToMyCommunity,
+  onVisitCommunity
+}: CommunityFeedProps) => {
   const [activeTab, setActiveTab] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilter, setShowFilter] = useState(false);
@@ -55,7 +69,14 @@ const CommunityFeed = ({ user, community, listings, onNavigate, appliedFilter, o
     setShowFilter(false);
   };
 
-  const displayCommunityName = appliedFilter || community.name;
+  const handleVisitCommunity = (homeState: string, homeDistrict: string, currentState: string, currentDistrict: string) => {
+    if (onVisitCommunity) {
+      onVisitCommunity(homeState, homeDistrict, currentState, currentDistrict);
+    }
+    setShowFilter(false);
+  };
+
+  const displayCommunityName = isVisiting ? visitingCommunityName : (appliedFilter || community.name);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
@@ -67,14 +88,28 @@ const CommunityFeed = ({ user, community, listings, onNavigate, appliedFilter, o
               <Users className="w-6 h-6 text-blue-500" />
               <div>
                 <h1 className="text-xl font-bold text-gray-800">{displayCommunityName}</h1>
-                {appliedFilter && (
-                  <Badge variant="secondary" className="text-xs mt-1">
-                    Filtered View
-                  </Badge>
-                )}
+                <div className="flex items-center space-x-2">
+                  <p className="text-sm text-gray-600">{community.members.length} member{community.members.length !== 1 ? 's' : ''}</p>
+                  {(appliedFilter || isVisiting) && (
+                    <Badge variant="secondary" className="text-xs">
+                      {isVisiting ? 'Visiting' : 'Filtered View'}
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
             <div className="flex items-center space-x-2">
+              {isVisiting && onBackToMyCommunity && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onBackToMyCommunity}
+                  className="flex items-center space-x-2"
+                >
+                  <Eye className="w-4 h-4" />
+                  <span>Back to My Community</span>
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -124,8 +159,10 @@ const CommunityFeed = ({ user, community, listings, onNavigate, appliedFilter, o
         <div className="space-y-4">
           {filteredListings.length === 0 ? (
             <Card className="p-8 text-center">
-              <p className="text-gray-500 mb-4">No listings found in your community yet.</p>
-              <p className="text-sm text-gray-400">Be the first to add a service or product!</p>
+              <p className="text-gray-500 mb-4">No listings found in this community yet.</p>
+              {!isVisiting && (
+                <p className="text-sm text-gray-400">Be the first to add a service or product!</p>
+              )}
             </Card>
           ) : (
             filteredListings.map((listing) => (
@@ -199,26 +236,28 @@ const CommunityFeed = ({ user, community, listings, onNavigate, appliedFilter, o
         </div>
       </div>
 
-      {/* Floating Action Buttons */}
-      <div className="fixed bottom-6 right-6 flex flex-col space-y-3">
-        <Button
-          onClick={() => onNavigate('add-service')}
-          size="lg"
-          className="rounded-full bg-blue-500 hover:bg-blue-600 shadow-lg"
-        >
-          <Plus className="w-5 h-5 mr-2" />
-          Add Service
-        </Button>
-        <Button
-          onClick={() => onNavigate('sell-product')}
-          size="lg"
-          variant="secondary"
-          className="rounded-full shadow-lg"
-        >
-          <Plus className="w-5 h-5 mr-2" />
-          Sell Product
-        </Button>
-      </div>
+      {/* Floating Action Buttons - Only show if not visiting */}
+      {!isVisiting && (
+        <div className="fixed bottom-6 right-6 flex flex-col space-y-3">
+          <Button
+            onClick={() => onNavigate('add-service')}
+            size="lg"
+            className="rounded-full bg-blue-500 hover:bg-blue-600 shadow-lg"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Add Service
+          </Button>
+          <Button
+            onClick={() => onNavigate('sell-product')}
+            size="lg"
+            variant="secondary"
+            className="rounded-full shadow-lg"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Sell Product
+          </Button>
+        </div>
+      )}
 
       {/* Community Filter Modal */}
       {showFilter && (
@@ -226,6 +265,7 @@ const CommunityFeed = ({ user, community, listings, onNavigate, appliedFilter, o
           user={user}
           onClose={() => setShowFilter(false)}
           onFilterChange={handleFilterChange}
+          onVisitCommunity={handleVisitCommunity}
         />
       )}
     </div>
