@@ -7,15 +7,19 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { User as UserType } from '@/pages/Index';
 
 interface ProfileCreationProps {
   onComplete: (profileData: { name: string; gender: 'Male' | 'Female'; designation: 'Student' | 'Working Professional' | 'Business' | 'Freelancer' | 'Other' }) => void;
+  user?: UserType | null;
+  isEditing?: boolean;
+  onUpdateUser?: (user: UserType) => void;
 }
 
-const ProfileCreation = ({ onComplete }: ProfileCreationProps) => {
-  const [name, setName] = useState('');
-  const [gender, setGender] = useState<'Male' | 'Female' | ''>('');
-  const [designation, setDesignation] = useState<'Student' | 'Working Professional' | 'Business' | 'Freelancer' | 'Other' | ''>('');
+const ProfileCreation = ({ onComplete, user, isEditing = false, onUpdateUser }: ProfileCreationProps) => {
+  const [name, setName] = useState(user?.name || '');
+  const [gender, setGender] = useState<'Male' | 'Female' | ''>(user?.gender || '');
+  const [designation, setDesignation] = useState<'Student' | 'Working Professional' | 'Business' | 'Freelancer' | 'Other' | ''>(user?.designation || '');
   const { toast } = useToast();
 
   const handleSave = () => {
@@ -47,15 +51,20 @@ const ProfileCreation = ({ onComplete }: ProfileCreationProps) => {
     }
 
     toast({
-      title: "Profile Created!",
-      description: "Your profile has been saved successfully.",
+      title: isEditing ? "Profile Updated!" : "Profile Created!",
+      description: isEditing ? "Your profile has been updated successfully." : "Your profile has been saved successfully.",
     });
 
-    onComplete({
-      name: name.trim(),
-      gender,
-      designation
-    });
+    if (isEditing && user && onUpdateUser) {
+      const updatedUser = { ...user, name: name.trim(), gender, designation };
+      onUpdateUser(updatedUser);
+    } else {
+      onComplete({
+        name: name.trim(),
+        gender,
+        designation
+      });
+    }
   };
 
   return (
@@ -68,9 +77,9 @@ const ProfileCreation = ({ onComplete }: ProfileCreationProps) => {
             </div>
           </div>
           <CardTitle className="text-2xl font-bold text-gray-800">
-            Create Your Profile
+            {isEditing ? 'Edit Your Profile' : 'Create Your Profile'}
           </CardTitle>
-          <p className="text-gray-600">Tell us a bit about yourself</p>
+          <p className="text-gray-600">{isEditing ? 'Update your information' : 'Tell us a bit about yourself'}</p>
         </CardHeader>
         
         <CardContent className="space-y-6">
@@ -120,7 +129,7 @@ const ProfileCreation = ({ onComplete }: ProfileCreationProps) => {
             onClick={handleSave}
             className="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white font-semibold py-3"
           >
-            Save Profile
+            {isEditing ? 'Update Profile' : 'Save Profile'}
           </Button>
         </CardContent>
       </Card>

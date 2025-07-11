@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,9 +14,11 @@ interface SellProductProps {
   user: User;
   onComplete: (listing: Omit<Listing, 'id' | 'userId' | 'user' | 'createdAt'>) => void;
   onBack: () => void;
+  existingListing?: Listing | null;
+  isEditing?: boolean;
 }
 
-const SellProduct = ({ user, onComplete, onBack }: SellProductProps) => {
+const SellProduct = ({ user, onComplete, onBack, existingListing, isEditing = false }: SellProductProps) => {
   const [formData, setFormData] = useState({
     itemType: '',
     location: '',
@@ -26,6 +28,19 @@ const SellProduct = ({ user, onComplete, onBack }: SellProductProps) => {
     photo: null as File | null
   });
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (existingListing && isEditing) {
+      setFormData({
+        itemType: existingListing.details?.itemType || '',
+        location: existingListing.location || '',
+        itemDetails: existingListing.description || '',
+        amount: existingListing.price || '',
+        contact: existingListing.contact || '',
+        photo: null
+      });
+    }
+  }, [existingListing, isEditing]);
 
   const itemTypes = [
     'Educational Items',
@@ -64,8 +79,8 @@ const SellProduct = ({ user, onComplete, onBack }: SellProductProps) => {
     };
 
     toast({
-      title: "Product Listed",
-      description: "Your product has been listed successfully",
+      title: isEditing ? "Product Updated" : "Product Listed",
+      description: isEditing ? "Your product has been updated successfully" : "Your product has been listed successfully",
     });
 
     onComplete(listing);
@@ -78,7 +93,9 @@ const SellProduct = ({ user, onComplete, onBack }: SellProductProps) => {
           <Button variant="ghost" onClick={onBack} className="mr-3">
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <h1 className="text-2xl font-bold text-gray-800">Sell Product</h1>
+          <h1 className="text-2xl font-bold text-gray-800">
+            {isEditing ? 'Edit Product' : 'Sell Product'}
+          </h1>
         </div>
 
         <Card>
@@ -162,7 +179,7 @@ const SellProduct = ({ user, onComplete, onBack }: SellProductProps) => {
               onClick={handleSubmit}
               className="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600"
             >
-              List Product
+              {isEditing ? 'Update Product' : 'List Product'}
             </Button>
           </CardContent>
         </Card>

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -117,27 +116,27 @@ const CommunityFeed = ({
     // Apply section-specific filters
     let matchesSectionFilter = true;
     if (activeTab === 'accommodation' && listing.type === 'accommodation') {
-      if (accommodationFilters.type && !listing.details?.accommodationType?.toLowerCase().includes(accommodationFilters.type.toLowerCase())) {
+      if (accommodationFilters.type && accommodationFilters.type !== 'all-types' && !listing.details?.accommodationType?.toLowerCase().includes(accommodationFilters.type.toLowerCase())) {
         matchesSectionFilter = false;
       }
       if (accommodationFilters.location && !listing.location.toLowerCase().includes(accommodationFilters.location.toLowerCase())) {
         matchesSectionFilter = false;
       }
-      if (accommodationFilters.availableFor && !listing.details?.availableFor?.toLowerCase().includes(accommodationFilters.availableFor.toLowerCase())) {
+      if (accommodationFilters.availableFor && accommodationFilters.availableFor !== 'all-available' && !listing.details?.availableFor?.toLowerCase().includes(accommodationFilters.availableFor.toLowerCase())) {
         matchesSectionFilter = false;
       }
     } else if (activeTab === 'proxy' && listing.type === 'proxy') {
-      if (proxyFilters.serviceType && !listing.details?.serviceType?.toLowerCase().includes(proxyFilters.serviceType.toLowerCase())) {
+      if (proxyFilters.serviceType && proxyFilters.serviceType !== 'all-services' && !listing.details?.serviceType?.toLowerCase().includes(proxyFilters.serviceType.toLowerCase())) {
         matchesSectionFilter = false;
       }
       if (proxyFilters.location && !listing.location.toLowerCase().includes(proxyFilters.location.toLowerCase())) {
         matchesSectionFilter = false;
       }
     } else if (activeTab === 'buy-sell' && listing.type === 'product') {
-      if (productFilters.category && !listing.details?.category?.toLowerCase().includes(productFilters.category.toLowerCase())) {
+      if (productFilters.category && productFilters.category !== 'all-categories' && !listing.details?.category?.toLowerCase().includes(productFilters.category.toLowerCase())) {
         matchesSectionFilter = false;
       }
-      if (productFilters.condition && !listing.details?.condition?.toLowerCase().includes(productFilters.condition.toLowerCase())) {
+      if (productFilters.condition && productFilters.condition !== 'all-conditions' && !listing.details?.condition?.toLowerCase().includes(productFilters.condition.toLowerCase())) {
         matchesSectionFilter = false;
       }
       if (productFilters.location && !listing.location.toLowerCase().includes(productFilters.location.toLowerCase())) {
@@ -281,7 +280,7 @@ const CommunityFeed = ({
               <SelectValue placeholder="Type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Types</SelectItem>
+              <SelectItem value="all-types">All Types</SelectItem>
               <SelectItem value="single">Single Room</SelectItem>
               <SelectItem value="shared">Shared Room</SelectItem>
               <SelectItem value="apartment">Apartment</SelectItem>
@@ -300,7 +299,7 @@ const CommunityFeed = ({
               <SelectValue placeholder="Available For" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All</SelectItem>
+              <SelectItem value="all-available">All</SelectItem>
               <SelectItem value="male">Male</SelectItem>
               <SelectItem value="female">Female</SelectItem>
               <SelectItem value="family">Family</SelectItem>
@@ -320,7 +319,7 @@ const CommunityFeed = ({
               <SelectValue placeholder="Service Type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Services</SelectItem>
+              <SelectItem value="all-services">All Services</SelectItem>
               <SelectItem value="document">Document Service</SelectItem>
               <SelectItem value="delivery">Delivery</SelectItem>
               <SelectItem value="queue">Queue Service</SelectItem>
@@ -347,7 +346,7 @@ const CommunityFeed = ({
               <SelectValue placeholder="Category" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Categories</SelectItem>
+              <SelectItem value="all-categories">All Categories</SelectItem>
               <SelectItem value="electronics">Electronics</SelectItem>
               <SelectItem value="furniture">Furniture</SelectItem>
               <SelectItem value="books">Books</SelectItem>
@@ -361,7 +360,7 @@ const CommunityFeed = ({
               <SelectValue placeholder="Condition" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Conditions</SelectItem>
+              <SelectItem value="all-conditions">All Conditions</SelectItem>
               <SelectItem value="new">New</SelectItem>
               <SelectItem value="like-new">Like New</SelectItem>
               <SelectItem value="good">Good</SelectItem>
