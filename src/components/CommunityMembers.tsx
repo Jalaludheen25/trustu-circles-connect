@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -537,7 +536,7 @@ const CommunityMembers = ({
                     <AvatarImage src="" />
                     <AvatarFallback className="bg-gradient-to-br from-blue-500 to-green-500 text-white">
                       {mutual.name.charAt(0).toUpperCase()}
-                    </AvatarFallb ack>
+                    </AvatarFallback>
                   </Avatar>
                   <div>
                     <h4 className="font-medium text-gray-800">{mutual.name}</h4>
