@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -147,21 +146,12 @@ const SellProduct = ({ user, onComplete, onBack, existingListing, isEditing = fa
 
             <div className="space-y-2">
               <Label>Amount *</Label>
-              <Select 
-                value={formData.amount} 
-                onValueChange={(value) => setFormData({...formData, amount: value})}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select price range" />
-                </SelectTrigger>
-                <SelectContent>
-                  {amountRanges.map((range) => (
-                    <SelectItem key={range} value={range}>
-                      ₹{range === '10000+' ? '10000 and above' : range}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                type="number"
+                placeholder="Enter amount (₹)"
+                value={formData.amount}
+                onChange={(e) => setFormData({...formData, amount: e.target.value})}
+              />
             </div>
 
             <div className="space-y-2">

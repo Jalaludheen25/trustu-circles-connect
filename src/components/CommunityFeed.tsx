@@ -65,6 +65,26 @@ const CommunityFeed = ({
     amount: ''
   });
 
+  // Helper function to check if a price falls within a range
+  const isPriceInRange = (price: string | undefined, range: string) => {
+    if (!price || !range || range.startsWith('all-')) return true;
+    
+    const numericPrice = parseFloat(price.replace(/[^\d.]/g, ''));
+    if (isNaN(numericPrice)) return false;
+    
+    if (range.includes('+')) {
+      const minValue = parseFloat(range.replace('+', ''));
+      return numericPrice >= minValue;
+    }
+    
+    if (range.includes('-')) {
+      const [min, max] = range.split('-').map(val => parseFloat(val));
+      return numericPrice >= min && numericPrice <= max;
+    }
+    
+    return false;
+  };
+
   // Function to check if a user belongs to the current community context
   const userBelongsToCommunity = (listingUser: User, homeState: string, homeDistrict: string, currentState: string, currentDistrict: string) => {
     return listingUser.homeState === homeState && 
@@ -127,12 +147,10 @@ const CommunityFeed = ({
           !listing.details?.availableFor?.includes(accommodationFilters.availableFor)) {
         matchesSectionFilter = false;
       }
-      if (accommodationFilters.rentPerDay && accommodationFilters.rentPerDay !== 'all-day-rates' && 
-          listing.details?.rentPerDay !== accommodationFilters.rentPerDay) {
+      if (accommodationFilters.rentPerDay && !isPriceInRange(listing.details?.rentPerDay, accommodationFilters.rentPerDay)) {
         matchesSectionFilter = false;
       }
-      if (accommodationFilters.rentPerMonth && accommodationFilters.rentPerMonth !== 'all-month-rates' && 
-          listing.details?.rentPerMonth !== accommodationFilters.rentPerMonth) {
+      if (accommodationFilters.rentPerMonth && !isPriceInRange(listing.details?.rentPerMonth, accommodationFilters.rentPerMonth)) {
         matchesSectionFilter = false;
       }
     } else if (activeTab === 'proxy' && listing.type === 'proxy') {
@@ -143,8 +161,7 @@ const CommunityFeed = ({
       if (proxyFilters.location && !listing.location.toLowerCase().includes(proxyFilters.location.toLowerCase())) {
         matchesSectionFilter = false;
       }
-      if (proxyFilters.charge && proxyFilters.charge !== 'all-charges' && 
-          listing.details?.charge !== proxyFilters.charge) {
+      if (proxyFilters.charge && !isPriceInRange(listing.details?.charge, proxyFilters.charge)) {
         matchesSectionFilter = false;
       }
     } else if (activeTab === 'buy-sell' && listing.type === 'product') {
@@ -155,8 +172,7 @@ const CommunityFeed = ({
       if (productFilters.location && !listing.location.toLowerCase().includes(productFilters.location.toLowerCase())) {
         matchesSectionFilter = false;
       }
-      if (productFilters.amount && productFilters.amount !== 'all-amounts' && 
-          listing.details?.amount !== productFilters.amount) {
+      if (productFilters.amount && !isPriceInRange(listing.details?.amount, productFilters.amount)) {
         matchesSectionFilter = false;
       }
     }

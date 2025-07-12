@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -74,7 +73,7 @@ const AddService = ({ user, onComplete, onBack, existingListing, isEditing = fal
         return;
       }
     } else if (serviceType === 'proxy') {
-      if (!formData.proxyType || !formData.locations || !formData.charge || !formData.contact) {
+      if (!formData.proxyType || !formData.location || !formData.charge || !formData.contact) {
         toast({
           title: "Missing Information",
           description: "Please fill in all required fields",
@@ -88,13 +87,11 @@ const AddService = ({ user, onComplete, onBack, existingListing, isEditing = fal
       type: serviceType,
       title: serviceType === 'accommodation' 
         ? `${formData.accommodationType} - ${formData.location}`
-        : `${formData.proxyType} - ${Array.isArray(formData.locations) ? formData.locations.join(', ') : formData.locations}`,
+        : `${formData.proxyType} - ${formData.location}`,
       description: serviceType === 'accommodation'
         ? `Available for: ${Array.isArray(formData.availableFor) ? formData.availableFor.join(', ') : formData.availableFor}. Max occupancy: ${formData.maxOccupancy}. ${formData.rentPerDay ? `₹${formData.rentPerDay}/day` : ''} ${formData.rentPerMonth ? `₹${formData.rentPerMonth}/month` : ''}`
         : `Service charge: ₹${formData.charge}`,
-      location: serviceType === 'accommodation' 
-        ? formData.location
-        : Array.isArray(formData.locations) ? formData.locations.join(', ') : formData.locations,
+      location: formData.location,
       contact: formData.contact,
       price: serviceType === 'accommodation' 
         ? (formData.rentPerDay || formData.rentPerMonth)
@@ -319,21 +316,12 @@ const AddService = ({ user, onComplete, onBack, existingListing, isEditing = fal
 
                 <div className="space-y-2">
                   <Label>Charge Per Service *</Label>
-                  <Select 
-                    value={formData.charge || ''} 
-                    onValueChange={(value) => setFormData({...formData, charge: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select charge range" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="100-200">₹100-200</SelectItem>
-                      <SelectItem value="200-500">₹200-500</SelectItem>
-                      <SelectItem value="500-700">₹500-700</SelectItem>
-                      <SelectItem value="700-1000">₹700-1000</SelectItem>
-                      <SelectItem value="1000+">₹1000 and above</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Input
+                    type="number"
+                    placeholder="Enter charge amount (₹)"
+                    value={formData.charge || ''}
+                    onChange={(e) => setFormData({...formData, charge: e.target.value})}
+                  />
                 </div>
 
                 <div className="space-y-2">
