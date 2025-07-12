@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Search, UserPlus, UserMinus, ArrowLeft, User as UserIcon, Camera, Users, Edit, Trash2, Eye, UserCheck } from 'lucide-react';
+import { Search, UserPlus, UserMinus, ArrowLeft, User as UserIcon, Camera, Users, Edit, Trash2, Eye } from 'lucide-react';
 import { User, Community } from '@/pages/Index';
 
 interface CommunityMembersProps {
@@ -165,9 +165,6 @@ const CommunityMembers = ({
     return connections.some(conn => conn.id === memberId);
   };
 
-  // Get members who are not friends
-  const nonFriendMembers = filteredMembers.filter(member => !isConnected(member.id));
-
   const handleToggleConnection = (member: User) => {
     if (isConnected(member.id)) {
       onRemoveConnection(member.id);
@@ -259,13 +256,176 @@ const CommunityMembers = ({
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-6">
-        {/* My Circle Section */}
+        {/* My Profile Section */}
+        <Card className="mb-6">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-800">My Profile</h2>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center space-x-2"
+                  onClick={handleEditProfile}
+                >
+                  <Edit className="w-4 h-4" />
+                  <span>Edit</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center space-x-2 text-red-600 hover:text-red-700"
+                  onClick={handleDeleteProfile}
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Delete</span>
+                </Button>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <Avatar className="w-16 h-16">
+                  <AvatarImage src="" />
+                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-green-500 text-white text-lg">
+                    {user.name.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  className="absolute -bottom-1 -right-1 rounded-full w-6 h-6 p-0"
+                  onClick={() => {/* Handle photo edit */}}
+                >
+                  <Camera className="w-3 h-3" />
+                </Button>
+              </div>
+              
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800">{user.name}</h3>
+                <div className="flex items-center space-x-2 mb-1">
+                  <Badge variant="outline">{user.gender}</Badge>
+                  <Badge variant="outline">{user.designation}</Badge>
+                </div>
+                <p className="text-sm text-gray-600">
+                  {user.homeDistrict}, {user.homeState} → {user.currentDistrict}, {user.currentState}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Community Members Section */}
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-2">
+              <Users className="w-5 h-5 text-blue-500" />
+              <h2 className="text-lg font-semibold text-gray-800">
+                Community Members ({filteredMembers.length + 1})
+              </h2>
+            </div>
+          </div>
+
+          {/* Search Bar */}
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              placeholder="Search community members..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+
+        {/* Members List */}
+        <div className="space-y-4">
+          {filteredMembers.length === 0 ? (
+            <Card className="p-8 text-center">
+              <p className="text-gray-500">No community members found.</p>
+            </Card>
+          ) : (
+            filteredMembers.map((member) => {
+              const mutualCount = getMutualConnections(member.id).length;
+              return (
+                <Card key={member.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <Avatar className="w-12 h-12">
+                          <AvatarImage src="" />
+                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-green-500 text-white">
+                            {member.name.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <h3 className="font-semibold text-gray-800">{member.name}</h3>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <Badge variant="outline">{member.gender}</Badge>
+                            <Badge variant="outline">{member.designation}</Badge>
+                            {isConnected(member.id) && (
+                              <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800">
+                                Friend
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {member.homeDistrict}, {member.homeState} → {member.currentDistrict}, {member.currentState}
+                          </p>
+                          {mutualCount > 0 && (
+                            <Button
+                              variant="link"
+                              size="sm"
+                              className="p-0 h-auto text-xs text-blue-600"
+                              onClick={() => handleShowMutuals(member)}
+                            >
+                              {mutualCount} mutual connection{mutualCount !== 1 ? 's' : ''}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewProfile(member)}
+                          className="flex items-center space-x-2"
+                        >
+                          <Eye className="w-4 h-4" />
+                          <span>View</span>
+                        </Button>
+                        <Button
+                          onClick={() => handleToggleConnection(member)}
+                          variant={isConnected(member.id) ? "destructive" : "default"}
+                          size="sm"
+                          className="flex items-center space-x-2"
+                        >
+                          {isConnected(member.id) ? (
+                            <>
+                              <UserMinus className="w-4 h-4" />
+                              <span>Remove</span>
+                            </>
+                          ) : (
+                            <>
+                              <UserPlus className="w-4 h-4" />
+                              <span>Connect</span>
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
+        </div>
+
+        {/* My Connections Section */}
         {connections.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center space-x-2">
-              <UserCheck className="w-5 h-5 text-blue-500" />
-              <span>My Circle ({connections.length})</span>
-            </h2>
+          <div className="mt-8">
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">My Connections ({connections.length})</h2>
             <div className="space-y-4">
               {connections.map((connection) => (
                 <Card key={connection.id} className="bg-blue-50">
@@ -311,99 +471,6 @@ const CommunityMembers = ({
             </div>
           </div>
         )}
-
-        {/* Community Members Section */}
-        <div className="mb-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-2">
-              <Users className="w-5 h-5 text-green-500" />
-              <h2 className="text-lg font-semibold text-gray-800">
-                Discover People ({nonFriendMembers.length})
-              </h2>
-            </div>
-          </div>
-
-          {/* Search Bar */}
-          <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder="Search community members..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
-
-        {/* Non-Friend Members List */}
-        <div className="space-y-4">
-          {nonFriendMembers.length === 0 ? (
-            <Card className="p-8 text-center">
-              <p className="text-gray-500">No new community members to discover.</p>
-            </Card>
-          ) : (
-            nonFriendMembers.map((member) => {
-              const mutualCount = getMutualConnections(member.id).length;
-              return (
-                <Card key={member.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <Avatar className="w-12 h-12">
-                          <AvatarImage src="" />
-                          <AvatarFallback className="bg-gradient-to-br from-green-500 to-blue-500 text-white">
-                            {member.name.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <h3 className="font-semibold text-gray-800">{member.name}</h3>
-                          <div className="flex items-center space-x-2 mt-1">
-                            <Badge variant="outline">{member.gender}</Badge>
-                            <Badge variant="outline">{member.designation}</Badge>
-                          </div>
-                          <p className="text-sm text-gray-600 mt-1">
-                            {member.homeDistrict}, {member.homeState} → {member.currentDistrict}, {member.currentState}
-                          </p>
-                          {mutualCount > 0 && (
-                            <Button
-                              variant="link"
-                              size="sm"
-                              className="p-0 h-auto text-xs text-blue-600"
-                              onClick={() => handleShowMutuals(member)}
-                            >
-                              {mutualCount} mutual connection{mutualCount !== 1 ? 's' : ''}
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleViewProfile(member)}
-                          className="flex items-center space-x-2"
-                        >
-                          <Eye className="w-4 h-4" />
-                          <span>View</span>
-                        </Button>
-                        <Button
-                          onClick={() => handleToggleConnection(member)}
-                          variant="default"
-                          size="sm"
-                          className="flex items-center space-x-2"
-                        >
-                          <UserPlus className="w-4 h-4" />
-                          <span>Connect</span>
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })
-          )}
-        </div>
       </div>
 
       {/* Profile View Dialog */}
