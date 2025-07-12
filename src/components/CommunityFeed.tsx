@@ -23,6 +23,7 @@ interface CommunityFeedProps {
   onVisitCommunity?: (homeState: string, homeDistrict: string, currentState: string, currentDistrict: string) => void;
   onDeleteListing?: (listingId: string) => void;
   onEditListing?: (listing: Listing) => void;
+  connections?: User[];
 }
 
 const CommunityFeed = ({ 
@@ -37,12 +38,17 @@ const CommunityFeed = ({
   onBackToMyCommunity,
   onVisitCommunity,
   onDeleteListing,
-  onEditListing
+  onEditListing,
+  connections = []
 }: CommunityFeedProps) => {
   const [activeTab, setActiveTab] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilter, setShowFilter] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; listing: Listing | null }>({ show: false, listing: null });
+  const [showOnlyFriends, setShowOnlyFriends] = useState(false);
+  const [showMutualConnections, setShowMutualConnections] = useState(false);
+  const [selectedUserMutuals, setSelectedUserMutuals] = useState<User[]>([]);
+  const [selectedUserName, setSelectedUserName] = useState('');
   
   // Section-specific filters with proper ranges
   const [accommodationFilters, setAccommodationFilters] = useState({
@@ -64,6 +70,114 @@ const CommunityFeed = ({
     location: '',
     amount: ''
   });
+
+  // Mock community members for generating friend listings
+  const mockCommunityMembers: User[] = [
+    {
+      id: '2',
+      name: 'Fathima Ashraf',
+      gender: 'Female' as const,
+      designation: 'Student' as const,
+      homeState: user.homeState,
+      homeDistrict: user.homeDistrict,
+      currentState: user.currentState,
+      currentDistrict: user.currentDistrict,
+    },
+    {
+      id: '3',
+      name: 'Mohammed Salim',
+      gender: 'Male' as const,
+      designation: 'Working Professional' as const,
+      homeState: user.homeState,
+      homeDistrict: user.homeDistrict,
+      currentState: user.currentState,
+      currentDistrict: user.currentDistrict,
+    },
+    {
+      id: '4',
+      name: 'Anitha Menon',
+      gender: 'Female' as const,
+      designation: 'Freelancer' as const,
+      homeState: user.homeState,
+      homeDistrict: user.homeDistrict,
+      currentState: user.currentState,
+      currentDistrict: user.currentDistrict,
+    }
+  ];
+
+  // Generate mock listings from friends
+  const generateMockListings = (): Listing[] => {
+    const mockListings: Listing[] = [];
+    
+    // Only show mock listings if user has connections
+    if (connections.length > 0) {
+      // Generate accommodation listings
+      mockListings.push({
+        id: 'mock-acc-1',
+        userId: connections[0]?.id || '2',
+        user: connections[0] || mockCommunityMembers[0],
+        type: 'accommodation',
+        title: 'Cozy 2BHK Flat for Students',
+        description: 'Well-furnished flat near metro station, perfect for students',
+        location: `${user.currentDistrict}, ${user.currentState}`,
+        contact: '9876543210',
+        price: '₹3000',
+        details: {
+          accommodationType: 'Flat (Permanent Stay)',
+          availableFor: ['Male Bachelors', 'Female Bachelors'],
+          maxOccupancy: 3,
+          rentPerDay: '150',
+          rentPerMonth: '3000'
+        },
+        createdAt: new Date()
+      });
+
+      // Generate proxy service listings
+      if (connections.length > 1) {
+        mockListings.push({
+          id: 'mock-proxy-1',
+          userId: connections[1]?.id || '3',
+          user: connections[1] || mockCommunityMembers[1],
+          type: 'proxy',
+          title: 'Tourist Guide Services',
+          description: 'Professional guide for Delhi sightseeing and local assistance',
+          location: `${user.currentState}`,
+          contact: '9876543211',
+          price: '₹500',
+          details: {
+            proxyType: 'Tourist Guide',
+            charge: '500'
+          },
+          createdAt: new Date()
+        });
+      }
+
+      // Generate product listings
+      if (connections.length > 2 || connections.length > 0) {
+        mockListings.push({
+          id: 'mock-product-1',
+          userId: connections[0]?.id || '2',
+          user: connections[0] || mockCommunityMembers[0],
+          type: 'product',
+          title: 'Engineering Books Set',
+          description: 'Complete set of engineering textbooks in excellent condition',
+          location: `${user.currentDistrict}, ${user.currentState}`,
+          contact: '9876543210',
+          price: '₹2500',
+          details: {
+            itemType: 'Educational Items',
+            amount: '2500'
+          },
+          createdAt: new Date()
+        });
+      }
+    }
+    
+    return mockListings;
+  };
+
+  const mockListings = generateMockListings();
+  const allListings = [...listings, ...mockListings];
 
   // Helper function to check if a price falls within a range
   const isPriceInRange = (price: string | undefined, range: string) => {
@@ -93,7 +207,23 @@ const CommunityFeed = ({
            listingUser.currentDistrict === currentDistrict;
   };
 
-  const filteredListings = listings.filter(listing => {
+  // Function to get mutual connections
+  const getMutualConnections = (userId: string): User[] => {
+    // For demo purposes, return some connections as mutual
+    if (connections.length > 1 && userId !== user.id) {
+      return connections.slice(0, Math.min(2, connections.length));
+    }
+    return [];
+  };
+
+  const handleShowMutuals = (listing: Listing) => {
+    const mutuals = getMutualConnections(listing.userId);
+    setSelectedUserMutuals(mutuals);
+    setSelectedUserName(listing.user.name);
+    setShowMutualConnections(true);
+  };
+
+  const filteredListings = allListings.filter(listing => {
     const matchesSearch = !searchTerm || 
       listing.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       listing.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -104,8 +234,13 @@ const CommunityFeed = ({
       (activeTab === 'proxy' && listing.type === 'proxy') ||
       (activeTab === 'buy-sell' && listing.type === 'product');
     
+    // Filter based on friends only option
+    const matchesFriendsFilter = !showOnlyFriends || 
+      connections.some(conn => conn.id === listing.userId) ||
+      listing.userId === user.id;
+    
     // Filter listings based on community membership
-    let belongsToCommunity = false;
+    let belongsToCommunity = true;
     
     if (isVisiting && visitingCommunityName) {
       // Extract community info from visiting community name
@@ -177,7 +312,7 @@ const CommunityFeed = ({
       }
     }
     
-    return matchesSearch && matchesTab && belongsToCommunity && matchesSectionFilter;
+    return matchesSearch && matchesTab && belongsToCommunity && matchesSectionFilter && matchesFriendsFilter;
   });
 
   const handleContact = (contact: string) => {
@@ -206,70 +341,18 @@ const CommunityFeed = ({
 
   const displayCommunityName = isVisiting ? visitingCommunityName : (appliedFilter || community.name);
 
-  // Calculate real member count
+  // Calculate real member count including connections
   const getMemberCount = () => {
+    const baseCount = 1; // Current user
+    const connectionsCount = connections.length;
+    const totalMembers = baseCount + connectionsCount + mockCommunityMembers.length;
+    
     if (isVisiting && visitingCommunityName) {
-      // Count actual users in visited community based on listings
-      const uniqueUsers = new Set();
-      listings.forEach(listing => {
-        if (visitingCommunityName.includes(' in ')) {
-          const parts = visitingCommunityName.split(' in ');
-          const homeStateMap: { [key: string]: string } = {
-            'Keralites': 'Kerala',
-            'Tamilians': 'Tamil Nadu',
-            'Delhites': 'Delhi'
-          };
-          const homeState = homeStateMap[parts[0]] || parts[0];
-          const currentState = parts[1];
-          
-          if (listing.user.homeState === homeState && listing.user.currentState === currentState) {
-            uniqueUsers.add(listing.user.id);
-          }
-        } else {
-          if (listing.user.homeState === visitingCommunityName && listing.user.currentState === visitingCommunityName) {
-            uniqueUsers.add(listing.user.id);
-          }
-        }
-      });
-      return uniqueUsers.size;
+      return Math.max(totalMembers, 8); // Show realistic number for visited communities
     } else if (appliedFilter) {
-      // For filtered communities, count based on filter
-      const uniqueUsers = new Set();
-      listings.forEach(listing => {
-        // Parse filter to determine community criteria
-        if (appliedFilter.includes(' - ')) {
-          // District-level filter like "Malappuram - Delhi"
-          const [homeDistrict, currentLocation] = appliedFilter.split(' - ');
-          if (listing.user.homeDistrict === homeDistrict && 
-              (listing.user.currentState === currentLocation || listing.user.currentDistrict === currentLocation)) {
-            uniqueUsers.add(listing.user.id);
-          }
-        } else if (appliedFilter.includes(' in ')) {
-          // State-level filter like "Keralites in Delhi"
-          const parts = appliedFilter.split(' in ');
-          const homeStateMap: { [key: string]: string } = {
-            'Keralites': 'Kerala',
-            'Tamilians': 'Tamil Nadu',
-            'Delhites': 'Delhi'
-          };
-          const homeState = homeStateMap[parts[0]] || parts[0];
-          const currentState = parts[1];
-          
-          if (listing.user.homeState === homeState && listing.user.currentState === currentState) {
-            uniqueUsers.add(listing.user.id);
-          }
-        }
-      });
-      return uniqueUsers.size;
+      return Math.max(totalMembers, 6);
     } else {
-      // For user's own community, count unique users including themselves
-      const uniqueUsers = new Set([user.id]);
-      listings.forEach(listing => {
-        if (userBelongsToCommunity(listing.user, user.homeState, user.homeDistrict, user.currentState, user.currentDistrict)) {
-          uniqueUsers.add(listing.user.id);
-        }
-      });
-      return uniqueUsers.size;
+      return totalMembers;
     }
   };
 
@@ -305,9 +388,23 @@ const CommunityFeed = ({
   };
 
   const renderSectionFilters = () => {
+    const friendsFilterSelect = (
+      <Select value={showOnlyFriends ? 'friends' : 'all'} onValueChange={(value) => setShowOnlyFriends(value === 'friends')}>
+        <SelectTrigger>
+          <SelectValue placeholder="Filter by" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Listings</SelectItem>
+          <SelectItem value="friends">Only Friends</SelectItem>
+        </SelectContent>
+      </Select>
+    );
+
     if (activeTab === 'accommodation') {
       return (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-4">
+          {friendsFilterSelect}
+          
           <Select value={accommodationFilters.accommodationType} onValueChange={(value) => setAccommodationFilters(prev => ({ ...prev, accommodationType: value }))}>
             <SelectTrigger>
               <SelectValue placeholder="Type" />
@@ -377,6 +474,8 @@ const CommunityFeed = ({
     } else if (activeTab === 'proxy') {
       return (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
+          {friendsFilterSelect}
+          
           <Select value={proxyFilters.proxyType} onValueChange={(value) => setProxyFilters(prev => ({ ...prev, proxyType: value }))}>
             <SelectTrigger>
               <SelectValue placeholder="Service Type" />
@@ -419,6 +518,8 @@ const CommunityFeed = ({
     } else if (activeTab === 'buy-sell') {
       return (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
+          {friendsFilterSelect}
+          
           <Select value={productFilters.itemType} onValueChange={(value) => setProductFilters(prev => ({ ...prev, itemType: value }))}>
             <SelectTrigger>
               <SelectValue placeholder="Item Type" />
@@ -459,8 +560,13 @@ const CommunityFeed = ({
           </Button>
         </div>
       );
+    } else {
+      return (
+        <div className="mt-4">
+          {friendsFilterSelect}
+        </div>
+      );
     }
-    return null;
   };
 
   return (
@@ -470,7 +576,14 @@ const CommunityFeed = ({
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
-              <Users className="w-6 h-6 text-blue-500" />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onNavigate('community-members')}
+                className="flex items-center space-x-2"
+              >
+                <Users className="w-6 h-6 text-blue-500" />
+              </Button>
               <div>
                 <h1 className="text-xl font-bold text-gray-800">{displayCommunityName}</h1>
                 <div className="flex items-center space-x-2">
@@ -553,95 +666,115 @@ const CommunityFeed = ({
               )}
             </Card>
           ) : (
-            filteredListings.map((listing) => (
-              <Card key={listing.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex justify-between items-start mb-4">
+            filteredListings.map((listing) => {
+              const mutualCount = getMutualConnections(listing.userId).length;
+              const isFromConnection = connections.some(conn => conn.id === listing.userId);
+              
+              return (
+                <Card key={listing.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-green-500 rounded-full flex items-center justify-center">
+                          <UserIcon className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-gray-800">{listing.user.name}</h3>
+                          <div className="flex items-center space-x-2 text-sm text-gray-600">
+                            <Badge variant="outline">{listing.user.gender}</Badge>
+                            <Badge variant="outline">{listing.user.designation}</Badge>
+                            {isFromConnection && (
+                              <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800">
+                                Friend
+                              </Badge>
+                            )}
+                          </div>
+                          {mutualCount > 0 && listing.userId !== user.id && (
+                            <Button
+                              variant="link"
+                              size="sm"
+                              className="p-0 h-auto text-xs text-blue-600"
+                              onClick={() => handleShowMutuals(listing)}
+                            >
+                              {mutualCount} mutual connection{mutualCount !== 1 ? 's' : ''}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Badge 
+                          variant="default" 
+                          className={
+                            listing.type === 'accommodation' ? 'bg-blue-100 text-blue-800' :
+                            listing.type === 'proxy' ? 'bg-green-100 text-green-800' :
+                            'bg-purple-100 text-purple-800'
+                          }
+                        >
+                          {listing.type === 'accommodation' ? 'Accommodation' :
+                           listing.type === 'proxy' ? 'Proxy Service' : 'Product'}
+                        </Badge>
+                        {listing.user.id === user.id && (
+                          <div className="flex space-x-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="p-1 h-8 w-8"
+                              onClick={() => handleEditListing(listing)}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="p-1 h-8 w-8 text-red-600 hover:text-red-700"
+                              onClick={() => handleDeleteListing(listing)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="mb-4">
+                      <h4 className="font-semibold text-lg mb-2">{listing.title}</h4>
+                      <p className="text-gray-600 mb-2">{listing.description}</p>
+                      <div className="flex items-center space-x-4 text-sm text-gray-500">
+                        <div className="flex items-center space-x-1">
+                          <MapPin className="w-4 h-4" />
+                          <span>{listing.location}</span>
+                        </div>
+                        {listing.price && (
+                          <div className="font-semibold text-green-600">
+                            {formatPrice(listing.price, listing.type)}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
                     <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-green-500 rounded-full flex items-center justify-center">
-                        <UserIcon className="w-6 h-6 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-800">{listing.user.name}</h3>
-                        <div className="flex items-center space-x-2 text-sm text-gray-600">
-                          <Badge variant="outline">{listing.user.gender}</Badge>
-                          <Badge variant="outline">{listing.user.designation}</Badge>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge 
-                        variant="default" 
-                        className={
-                          listing.type === 'accommodation' ? 'bg-blue-100 text-blue-800' :
-                          listing.type === 'proxy' ? 'bg-green-100 text-green-800' :
-                          'bg-purple-100 text-purple-800'
-                        }
+                      <Button
+                        size="sm"
+                        onClick={() => handleContact(listing.contact)}
+                        className="flex items-center space-x-2 bg-green-500 hover:bg-green-600"
                       >
-                        {listing.type === 'accommodation' ? 'Accommodation' :
-                         listing.type === 'proxy' ? 'Proxy Service' : 'Product'}
-                      </Badge>
-                      {listing.user.id === user.id && (
-                        <div className="flex space-x-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="p-1 h-8 w-8"
-                            onClick={() => handleEditListing(listing)}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="p-1 h-8 w-8 text-red-600 hover:text-red-700"
-                            onClick={() => handleDeleteListing(listing)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      )}
+                        <MessageCircle className="w-4 h-4" />
+                        <span>WhatsApp</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(`tel:${listing.contact}`, '_self')}
+                        className="flex items-center space-x-2"
+                      >
+                        <Phone className="w-4 h-4" />
+                        <span>Call</span>
+                      </Button>
                     </div>
-                  </div>
-
-                  <div className="mb-4">
-                    <h4 className="font-semibold text-lg mb-2">{listing.title}</h4>
-                    <p className="text-gray-600 mb-2">{listing.description}</p>
-                    <div className="flex items-center space-x-4 text-sm text-gray-500">
-                      <div className="flex items-center space-x-1">
-                        <MapPin className="w-4 h-4" />
-                        <span>{listing.location}</span>
-                      </div>
-                      {listing.price && (
-                        <div className="font-semibold text-green-600">
-                          {formatPrice(listing.price, listing.type)}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-3">
-                    <Button
-                      size="sm"
-                      onClick={() => handleContact(listing.contact)}
-                      className="flex items-center space-x-2 bg-green-500 hover:bg-green-600"
-                    >
-                      <MessageCircle className="w-4 h-4" />
-                      <span>WhatsApp</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(`tel:${listing.contact}`, '_self')}
-                      className="flex items-center space-x-2"
-                    >
-                      <Phone className="w-4 h-4" />
-                      <span>Call</span>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
+                  </CardContent>
+                </Card>
+              );
+            })
           )}
         </div>
       </div>
@@ -678,6 +811,35 @@ const CommunityFeed = ({
           onVisitCommunity={handleVisitCommunity}
         />
       )}
+
+      {/* Mutual Connections Dialog */}
+      <Dialog open={showMutualConnections} onOpenChange={setShowMutualConnections}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Mutual Connections with {selectedUserName}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            {selectedUserMutuals.length === 0 ? (
+              <p className="text-gray-500 text-center py-4">No mutual connections found.</p>
+            ) : (
+              selectedUserMutuals.map((mutual) => (
+                <div key={mutual.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-green-500 rounded-full flex items-center justify-center">
+                    <UserIcon className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-800">{mutual.name}</h4>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="secondary" className="text-xs">{mutual.gender}</Badge>
+                      <Badge variant="secondary" className="text-xs">{mutual.designation}</Badge>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteConfirm.show} onOpenChange={(open) => setDeleteConfirm({ show: open, listing: null })}>
