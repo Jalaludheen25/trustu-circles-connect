@@ -1,9 +1,11 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Users, User, Settings, Heart, MapPin, Calendar, Star, Filter, Search, Home, Briefcase } from 'lucide-react';
 import { User as UserType, Community, Listing } from '@/pages/Index';
@@ -44,15 +46,19 @@ const CommunityFeed = ({
   const [showFilterDialog, setShowFilterDialog] = useState(false);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [showListingDetails, setShowListingDetails] = useState(false);
+  const [activeTab, setActiveTab] = useState('all');
 
   const currentCommunityName = isVisiting && visitingCommunityName ? visitingCommunityName : 
     (appliedFilter || community.name);
 
   const filteredListings = listings.filter(listing => {
+    // First apply community filter
+    let communityFiltered = true;
+    
     if (appliedFilter) {
       if (appliedFilter.includes(' - ')) {
         const [homeDistrict, currentLocation] = appliedFilter.split(' - ');
-        return listing.user.homeDistrict === homeDistrict && 
+        communityFiltered = listing.user.homeDistrict === homeDistrict && 
           (listing.user.currentState === currentLocation || listing.user.currentDistrict === currentLocation);
       } else if (appliedFilter.includes(' in ')) {
         const parts = appliedFilter.split(' in ');
@@ -64,7 +70,7 @@ const CommunityFeed = ({
         const homeState = homeStateMap[parts[0]] || parts[0];
         const currentState = parts[1];
         
-        return listing.user.homeState === homeState && listing.user.currentState === currentState;
+        communityFiltered = listing.user.homeState === homeState && listing.user.currentState === currentState;
       }
     } else if (isVisiting && visitingCommunityName) {
       if (visitingCommunityName.includes(' in ')) {
@@ -77,18 +83,22 @@ const CommunityFeed = ({
         const homeState = homeStateMap[parts[0]] || parts[0];
         const currentState = parts[1];
         
-        return listing.user.homeState === homeState && listing.user.currentState === currentState;
+        communityFiltered = listing.user.homeState === homeState && listing.user.currentState === currentState;
       } else {
-        return listing.user.homeState === visitingCommunityName && listing.user.currentState === visitingCommunityName;
+        communityFiltered = listing.user.homeState === visitingCommunityName && listing.user.currentState === visitingCommunityName;
       }
     } else {
-      return listing.user.homeState === user.homeState && 
+      communityFiltered = listing.user.homeState === user.homeState && 
         listing.user.homeDistrict === user.homeDistrict &&
         listing.user.currentState === user.currentState && 
         listing.user.currentDistrict === user.currentDistrict;
     }
+
+    // Then apply tab filter
+    if (!communityFiltered) return false;
     
-    return true;
+    if (activeTab === 'all') return true;
+    return listing.type === activeTab;
   });
 
   const handleListingClick = (listing: Listing) => {
@@ -113,6 +123,59 @@ const CommunityFeed = ({
       default: return 'bg-gray-50 text-gray-700 border-gray-200';
     }
   };
+
+  const getTabCounts = () => {
+    const allListings = listings.filter(listing => {
+      if (appliedFilter) {
+        if (appliedFilter.includes(' - ')) {
+          const [homeDistrict, currentLocation] = appliedFilter.split(' - ');
+          return listing.user.homeDistrict === homeDistrict && 
+            (listing.user.currentState === currentLocation || listing.user.currentDistrict === currentLocation);
+        } else if (appliedFilter.includes(' in ')) {
+          const parts = appliedFilter.split(' in ');
+          const homeStateMap: { [key: string]: string } = {
+            'Keralites': 'Kerala',
+            'Tamilians': 'Tamil Nadu',
+            'Delhites': 'Delhi'
+          };
+          const homeState = homeStateMap[parts[0]] || parts[0];
+          const currentState = parts[1];
+          
+          return listing.user.homeState === homeState && listing.user.currentState === currentState;
+        }
+      } else if (isVisiting && visitingCommunityName) {
+        if (visitingCommunityName.includes(' in ')) {
+          const parts = visitingCommunityName.split(' in ');
+          const homeStateMap: { [key: string]: string } = {
+            'Keralites': 'Kerala',
+            'Tamilians': 'Tamil Nadu',
+            'Delhites': 'Delhi'
+          };
+          const homeState = homeStateMap[parts[0]] || parts[0];
+          const currentState = parts[1];
+          
+          return listing.user.homeState === homeState && listing.user.currentState === currentState;
+        } else {
+          return listing.user.homeState === visitingCommunityName && listing.user.currentState === visitingCommunityName;
+        }
+      } else {
+        return listing.user.homeState === user.homeState && 
+          listing.user.homeDistrict === user.homeDistrict &&
+          listing.user.currentState === user.currentState && 
+          listing.user.currentDistrict === user.currentDistrict;
+      }
+      return true;
+    });
+
+    return {
+      all: allListings.length,
+      accommodation: allListings.filter(l => l.type === 'accommodation').length,
+      proxy: allListings.filter(l => l.type === 'proxy').length,
+      product: allListings.filter(l => l.type === 'product').length
+    };
+  };
+
+  const tabCounts = getTabCounts();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-white to-blue-50">
@@ -212,7 +275,7 @@ const CommunityFeed = ({
         </Card>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <Button
             onClick={() => onNavigate('add-service')}
             className="h-20 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg"
@@ -232,135 +295,154 @@ const CommunityFeed = ({
               <span className="font-medium">Sell Product</span>
             </div>
           </Button>
-          
-          <Button
-            onClick={() => onNavigate('community-members')}
-            className="h-20 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-lg"
-          >
-            <div className="text-center">
-              <Users className="w-6 h-6 mx-auto mb-1" />
-              <span className="font-medium">Community Members</span>
-            </div>
-          </Button>
         </div>
 
-        {/* Listings Section */}
+        {/* Listings Section with Tabs */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-900">Community Listings</h2>
             <span className="text-gray-600">{filteredListings.length} listings available</span>
           </div>
 
-          {filteredListings.length === 0 ? (
-            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
-              <CardContent className="p-12 text-center">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Search className="w-8 h-8 text-gray-400" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-700 mb-2">No listings found</h3>
-                <p className="text-gray-500 mb-6">
-                  Be the first to add a service or product to your community!
-                </p>
-                <div className="flex justify-center space-x-4">
-                  <Button
-                    onClick={() => onNavigate('add-service')}
-                    className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
-                  >
-                    Add Service
-                  </Button>
-                  <Button
-                    onClick={() => onNavigate('sell-product')}
-                    className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
-                  >
-                    Sell Product
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredListings.map((listing) => (
-                <Card
-                  key={listing.id}
-                  className="border-0 shadow-lg bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-200 cursor-pointer transform hover:scale-[1.02]"
-                  onClick={() => handleListingClick(listing)}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="w-10 h-10">
-                          <AvatarImage src="" />
-                          <AvatarFallback className="bg-gradient-to-br from-rose-500 to-pink-500 text-white">
-                            {listing.user.name.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium text-gray-900">{listing.user.name}</p>
-                          <p className="text-xs text-gray-500">{listing.user.designation}</p>
-                        </div>
-                      </div>
-                      <Badge className={`${getListingTypeColor(listing.type)} border`}>
-                        {getListingIcon(listing.type)}
-                        <span className="ml-1 capitalize">{listing.type}</span>
-                      </Badge>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid grid-cols-4 w-full mb-6">
+              <TabsTrigger value="all" className="flex items-center space-x-2">
+                <span>All Listings</span>
+                <Badge variant="secondary" className="ml-1">{tabCounts.all}</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="accommodation" className="flex items-center space-x-2">
+                <Home className="w-4 h-4" />
+                <span>Accommodation</span>
+                <Badge variant="secondary" className="ml-1">{tabCounts.accommodation}</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="proxy" className="flex items-center space-x-2">
+                <User className="w-4 h-4" />
+                <span>Proxy</span>
+                <Badge variant="secondary" className="ml-1">{tabCounts.proxy}</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="product" className="flex items-center space-x-2">
+                <Briefcase className="w-4 h-4" />
+                <span>Buy & Sell</span>
+                <Badge variant="secondary" className="ml-1">{tabCounts.product}</Badge>
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value={activeTab}>
+              {filteredListings.length === 0 ? (
+                <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+                  <CardContent className="p-12 text-center">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Search className="w-8 h-8 text-gray-400" />
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{listing.title}</h3>
-                    <p className="text-gray-600 text-sm mb-3 line-clamp-3">{listing.description}</p>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center text-sm text-gray-500">
-                        <MapPin className="w-4 h-4 mr-1" />
-                        <span className="truncate">{listing.location}</span>
-                      </div>
-                      {listing.price && (
-                        <span className="font-semibold text-green-600">{listing.price}</span>
-                      )}
-                    </div>
-                    
-                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-                      <div className="flex items-center text-xs text-gray-500">
-                        <Calendar className="w-3 h-3 mr-1" />
-                        <span>{new Date(listing.createdAt).toLocaleDateString()}</span>
-                      </div>
-                      
-                      {listing.userId === user.id && (
-                        <div className="flex space-x-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onEditListing(listing);
-                            }}
-                            className="h-7 px-2 text-xs"
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onDeleteListing(listing.id);
-                              toast({
-                                title: "Listing Deleted",
-                                description: "Your listing has been removed.",
-                              });
-                            }}
-                            className="h-7 px-2 text-xs"
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      )}
+                    <h3 className="text-xl font-semibold text-gray-700 mb-2">No listings found</h3>
+                    <p className="text-gray-500 mb-6">
+                      {activeTab === 'all' 
+                        ? "Be the first to add a service or product to your community!"
+                        : `No ${activeTab} listings available in your community.`
+                      }
+                    </p>
+                    <div className="flex justify-center space-x-4">
+                      <Button
+                        onClick={() => onNavigate('add-service')}
+                        className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
+                      >
+                        Add Service
+                      </Button>
+                      <Button
+                        onClick={() => onNavigate('sell-product')}
+                        className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+                      >
+                        Sell Product
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
-          )}
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredListings.map((listing) => (
+                    <Card
+                      key={listing.id}
+                      className="border-0 shadow-lg bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-200 cursor-pointer transform hover:scale-[1.02]"
+                      onClick={() => handleListingClick(listing)}
+                    >
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center space-x-3">
+                            <Avatar className="w-10 h-10">
+                              <AvatarImage src="" />
+                              <AvatarFallback className="bg-gradient-to-br from-rose-500 to-pink-500 text-white">
+                                {listing.user.name.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium text-gray-900">{listing.user.name}</p>
+                              <p className="text-xs text-gray-500">{listing.user.designation}</p>
+                            </div>
+                          </div>
+                          <Badge className={`${getListingTypeColor(listing.type)} border`}>
+                            {getListingIcon(listing.type)}
+                            <span className="ml-1 capitalize">{listing.type}</span>
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{listing.title}</h3>
+                        <p className="text-gray-600 text-sm mb-3 line-clamp-3">{listing.description}</p>
+                        
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center text-sm text-gray-500">
+                            <MapPin className="w-4 h-4 mr-1" />
+                            <span className="truncate">{listing.location}</span>
+                          </div>
+                          {listing.price && (
+                            <span className="font-semibold text-green-600">{listing.price}</span>
+                          )}
+                        </div>
+                        
+                        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+                          <div className="flex items-center text-xs text-gray-500">
+                            <Calendar className="w-3 h-3 mr-1" />
+                            <span>{new Date(listing.createdAt).toLocaleDateString()}</span>
+                          </div>
+                          
+                          {listing.userId === user.id && (
+                            <div className="flex space-x-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onEditListing(listing);
+                                }}
+                                className="h-7 px-2 text-xs"
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onDeleteListing(listing.id);
+                                  toast({
+                                    title: "Listing Deleted",
+                                    description: "Your listing has been removed.",
+                                  });
+                                }}
+                                className="h-7 px-2 text-xs"
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
 

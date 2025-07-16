@@ -7,7 +7,6 @@ import CommunityFeed from '@/components/CommunityFeed';
 import AddService from '@/components/AddService';
 import SellProduct from '@/components/SellProduct';
 import Connections from '@/components/Connections';
-import CommunityMembers from '@/components/CommunityMembers';
 
 export type User = {
   id: string;
@@ -323,24 +322,6 @@ const Index = () => {
       case 'connections':
         return (
           <Connections
-            user={user!}
-            community={community!}
-            connections={connections}
-            onAddConnection={handleAddConnection}
-            onRemoveConnection={handleRemoveConnection}
-            onBack={() => setCurrentStep('feed')}
-            appliedFilter={appliedFilter}
-            isVisiting={isVisitingCommunity}
-            visitingCommunityName={visitingCommunityData 
-              ? generateVisitingCommunityName(visitingCommunityData.homeState, visitingCommunityData.currentState)
-              : ''}
-            onDeleteProfile={handleDeleteProfile}
-            onEditProfile={handleEditProfile}
-          />
-        );
-      case 'community-members':
-        return (
-          <CommunityMembers
             user={user!}
             community={community!}
             connections={connections}
