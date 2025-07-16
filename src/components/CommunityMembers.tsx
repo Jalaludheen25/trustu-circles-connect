@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Search, UserPlus, UserMinus, ArrowLeft, User as UserIcon, Camera, Users, Edit, Trash2, Eye, Lock, GraduationCap, Building2 } from 'lucide-react';
+import { Search, UserPlus, UserMinus, ArrowLeft, Eye, Lock, GraduationCap, Building2, Users } from 'lucide-react';
 import { User, Community } from '@/pages/Index';
 
 interface CommunityMembersProps {
@@ -41,7 +41,6 @@ const CommunityMembers = ({
   const [showMutualConnections, setShowMutualConnections] = useState(false);
   const [selectedUserMutuals, setSelectedUserMutuals] = useState<User[]>([]);
   const [selectedUserName, setSelectedUserName] = useState('');
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showProfileView, setShowProfileView] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<User | null>(null);
 
@@ -228,25 +227,8 @@ const CommunityMembers = ({
 
   const currentCommunityName = getCurrentCommunityName();
 
-  const handleDeleteProfile = () => {
-    setShowDeleteConfirm(true);
-  };
-
-  const confirmDeleteProfile = () => {
-    if (onDeleteProfile) {
-      onDeleteProfile();
-    }
-    setShowDeleteConfirm(false);
-  };
-
-  const handleEditProfile = () => {
-    if (onEditProfile) {
-      onEditProfile();
-    }
-  };
-
-  // Calculate total member count
-  const totalMemberCount = 1 + connections.length + filteredMembers.length;
+  // Calculate total member count (excluding current user)
+  const totalMemberCount = filteredMembers.length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
@@ -268,106 +250,13 @@ const CommunityMembers = ({
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-6">
-        {/* My Profile Section */}
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-800">My Profile</h2>
-              <div className="flex items-center space-x-2">
-                {user.isProfileLocked && (
-                  <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800">
-                    <Lock className="w-3 h-3 mr-1" />
-                    Private
-                  </Badge>
-                )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center space-x-2"
-                  onClick={handleEditProfile}
-                >
-                  <Edit className="w-4 h-4" />
-                  <span>Edit</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center space-x-2 text-red-600 hover:text-red-700"
-                  onClick={handleDeleteProfile}
-                >
-                  <Trash2 className="w-4 h-4" />
-                  <span>Delete</span>
-                </Button>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <div className="relative">
-                <Avatar className="w-16 h-16">
-                  <AvatarImage src="" />
-                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-green-500 text-white text-lg">
-                    {user.name.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  className="absolute -bottom-1 -right-1 rounded-full w-6 h-6 p-0"
-                  onClick={() => {/* Handle photo edit */}}
-                >
-                  <Camera className="w-3 h-3" />
-                </Button>
-              </div>
-              
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-800">{user.name}</h3>
-                <div className="flex items-center space-x-2 mb-2">
-                  <Badge variant="outline">{user.gender}</Badge>
-                  <Badge variant="outline">{user.designation}</Badge>
-                </div>
-                
-                {(user.institute || user.company) && (
-                  <div className="flex items-center space-x-2 mb-1">
-                    {user.designation === 'Student' && user.institute && (
-                      <div className="flex items-center space-x-1 text-sm text-gray-600">
-                        <GraduationCap className="w-4 h-4" />
-                        <span>{user.institute}</span>
-                      </div>
-                    )}
-                    {(user.designation === 'Working Professional' || user.designation === 'Business' || user.designation === 'Freelancer') && user.company && (
-                      <div className="flex items-center space-x-1 text-sm text-gray-600">
-                        <Building2 className="w-4 h-4" />
-                        <span>{user.company}</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                <p className="text-sm text-gray-600 mb-1">
-                  {user.homeDistrict}, {user.homeState} → {user.currentDistrict}, {user.currentState}
-                </p>
-                
-                {user.bio && (
-                  <p className="text-sm text-gray-700 mt-2">{user.bio}</p>
-                )}
-                
-                {user.interests && (
-                  <p className="text-xs text-gray-600 mt-1">
-                    <span className="font-medium">Interests:</span> {user.interests}
-                  </p>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Community Members Section */}
         <div className="mb-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-2">
               <Users className="w-5 h-5 text-blue-500" />
               <h2 className="text-lg font-semibold text-gray-800">
-                Community Members ({filteredMembers.length + 1})
+                Community Members ({totalMemberCount})
               </h2>
             </div>
           </div>
@@ -648,30 +537,6 @@ const CommunityMembers = ({
               ))
             )}
           </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Profile Confirmation Dialog */}
-      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Profile</DialogTitle>
-          </DialogHeader>
-          <p className="text-gray-600">Are you sure you want to delete your profile? This action cannot be undone.</p>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowDeleteConfirm(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={confirmDeleteProfile}
-            >
-              Delete Profile
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

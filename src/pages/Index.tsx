@@ -157,8 +157,16 @@ const Index = () => {
     email?: string;
     interests?: string;
   }) => {
-    setUser(prev => ({ ...prev, ...profileData } as User));
-    setCurrentStep('join-community');
+    const updatedUser = { ...user, ...profileData } as User;
+    setUser(updatedUser);
+    
+    // Only go to join-community if user doesn't have location data yet
+    if (!updatedUser.currentState) {
+      setCurrentStep('join-community');
+    } else {
+      // If user already has location data, go back to feed
+      setCurrentStep('feed');
+    }
   };
 
   const handleJoinCommunity = (communityData: Partial<User>) => {
@@ -262,7 +270,7 @@ const Index = () => {
       case 'profile':
         return (
           <ProfileCreation 
-            onComplete={editingListing ? () => setCurrentStep('feed') : handleProfileCreation}
+            onComplete={handleProfileCreation}
             user={user}
             isEditing={!!user && currentStep === 'profile'}
             onUpdateUser={setUser}
