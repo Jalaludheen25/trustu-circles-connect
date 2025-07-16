@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -373,7 +372,8 @@ const CommunityFeed = ({
           </DialogHeader>
           <CommunityFilter
             user={user}
-            onFilterApplied={(filter) => {
+            onClose={() => setShowFilterDialog(false)}
+            onFilterChange={(filter) => {
               onFilterApplied(filter);
               setShowFilterDialog(false);
             }}
