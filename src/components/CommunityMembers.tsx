@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
 import { Search, UserPlus, UserMinus, ArrowLeft, User as UserIcon, Camera, Users, Edit, Trash2, Eye, Lock, GraduationCap, Building2 } from 'lucide-react';
 import { User, Community } from '@/pages/Index';
 
@@ -35,6 +36,7 @@ const CommunityMembers = ({
   onDeleteProfile,
   onEditProfile
 }: CommunityMembersProps) => {
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [showMutualConnections, setShowMutualConnections] = useState(false);
   const [selectedUserMutuals, setSelectedUserMutuals] = useState<User[]>([]);
