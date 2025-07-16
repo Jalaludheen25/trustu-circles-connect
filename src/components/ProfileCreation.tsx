@@ -1,15 +1,15 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { User, Lock, Unlock, Building2, GraduationCap, Phone, Mail, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { User as UserType } from '@/pages/Index';
+import { User, Save, Mail, Phone, MapPin, Building2, GraduationCap, Heart, Lock, Unlock } from 'lucide-react';
 
 interface ProfileCreationProps {
   onComplete: (profileData: { 
@@ -24,272 +24,295 @@ interface ProfileCreationProps {
     email?: string;
     interests?: string;
   }) => void;
-  user?: UserType | null;
+  user?: any;
   isEditing?: boolean;
-  onUpdateUser?: (user: UserType) => void;
+  onUpdateUser?: (user: any) => void;
 }
 
 const ProfileCreation = ({ onComplete, user, isEditing = false, onUpdateUser }: ProfileCreationProps) => {
-  const [name, setName] = useState(user?.name || '');
-  const [gender, setGender] = useState<'Male' | 'Female' | ''>(user?.gender || '');
-  const [designation, setDesignation] = useState<'Student' | 'Working Professional' | 'Business' | 'Freelancer' | 'Other' | ''>(user?.designation || '');
-  const [isProfileLocked, setIsProfileLocked] = useState(user?.isProfileLocked || false);
-  const [institute, setInstitute] = useState(user?.institute || '');
-  const [company, setCompany] = useState(user?.company || '');
-  const [bio, setBio] = useState(user?.bio || '');
-  const [phone, setPhone] = useState(user?.phone || '');
-  const [email, setEmail] = useState(user?.email || '');
-  const [interests, setInterests] = useState(user?.interests || '');
   const { toast } = useToast();
+  const [formData, setFormData] = useState({
+    name: user?.name || '',
+    gender: user?.gender || 'Male' as 'Male' | 'Female',
+    designation: user?.designation || 'Student' as 'Student' | 'Working Professional' | 'Business' | 'Freelancer' | 'Other',
+    isProfileLocked: user?.isProfileLocked || false,
+    institute: user?.institute || '',
+    company: user?.company || '',
+    bio: user?.bio || '',
+    phone: user?.phone || '',
+    email: user?.email || '',
+    interests: user?.interests || ''
+  });
 
-  const handleSave = () => {
-    if (!name.trim()) {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.name.trim()) {
       toast({
         title: "Name Required",
-        description: "Please enter your name",
+        description: "Please enter your name to continue.",
         variant: "destructive"
       });
       return;
     }
 
-    if (!gender) {
-      toast({
-        title: "Gender Required",
-        description: "Please select your gender",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!designation) {
-      toast({
-        title: "Designation Required",
-        description: "Please select your designation",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    toast({
-      title: isEditing ? "Profile Updated!" : "Profile Created!",
-      description: isEditing ? "Your profile has been updated successfully." : "Your profile has been saved successfully.",
-    });
-
-    const profileData = {
-      name: name.trim(),
-      gender,
-      designation,
-      isProfileLocked,
-      institute: institute.trim(),
-      company: company.trim(),
-      bio: bio.trim(),
-      phone: phone.trim(),
-      email: email.trim(),
-      interests: interests.trim()
-    };
-
-    if (isEditing && user && onUpdateUser) {
-      const updatedUser = { ...user, ...profileData };
+    if (isEditing && onUpdateUser) {
+      const updatedUser = { ...user, ...formData };
       onUpdateUser(updatedUser);
-      onComplete(profileData);
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been successfully updated.",
+      });
     } else {
-      onComplete(profileData);
+      onComplete(formData);
     }
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl mx-auto shadow-xl border-0 bg-white/90 backdrop-blur-sm">
-        <CardHeader className="text-center pb-4">
-          <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-green-500 rounded-full flex items-center justify-center">
-              <User className="w-8 h-8 text-white" />
-            </div>
-          </div>
-          <CardTitle className="text-2xl font-bold text-gray-800">
-            {isEditing ? 'Edit Your Profile' : 'Create Your Profile'}
-          </CardTitle>
-          <p className="text-gray-600">{isEditing ? 'Update your information' : 'Tell us a bit about yourself'}</p>
-        </CardHeader>
-        
-        <CardContent className="space-y-6">
-          {/* Privacy Settings */}
-          {isEditing && (
-            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  {isProfileLocked ? (
-                    <Lock className="w-5 h-5 text-blue-600" />
-                  ) : (
-                    <Unlock className="w-5 h-5 text-green-600" />
-                  )}
-                  <div>
-                    <Label className="text-sm font-medium">Profile Privacy</Label>
-                    <p className="text-xs text-gray-600">
-                      {isProfileLocked 
-                        ? "Only your friends can view your full profile" 
-                        : "Anyone in the community can view your profile"
-                      }
-                    </p>
-                  </div>
-                </div>
-                <Switch
-                  checked={isProfileLocked}
-                  onCheckedChange={setIsProfileLocked}
-                />
-              </div>
-            </div>
-          )}
+  const handleInputChange = (field: string, value: string | boolean) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Basic Information */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-gray-800 border-b pb-2">Basic Information</h3>
-              
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name *</Label>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-white to-blue-50">
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-rose-500 to-pink-500 rounded-full mb-4">
+            <User className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            {isEditing ? 'Edit Your Profile' : 'Create Your Profile'}
+          </h1>
+          <p className="text-gray-600 max-w-md mx-auto">
+            {isEditing ? 'Update your information to keep your profile current' : 'Tell us about yourself to get started'}
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Profile Picture & Basic Info */}
+          <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+            <CardHeader className="text-center pb-4">
+              <Avatar className="w-24 h-24 mx-auto mb-4 border-4 border-white shadow-lg">
+                <AvatarImage src="" />
+                <AvatarFallback className="bg-gradient-to-br from-rose-500 to-pink-500 text-white text-2xl">
+                  {formData.name.charAt(0).toUpperCase() || 'U'}
+                </AvatarFallback>
+              </Avatar>
+              <CardTitle className="text-xl text-gray-800">Basic Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <Label htmlFor="name" className="text-sm font-medium text-gray-700 mb-2 block">Full Name *</Label>
                 <Input
                   id="name"
-                  type="text"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
                   placeholder="Enter your full name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  className="h-12 border-gray-200 focus:border-rose-500 focus:ring-rose-500"
+                  required
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="gender">Gender *</Label>
-                <Select value={gender} onValueChange={(value: 'Male' | 'Female') => setGender(value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select your gender" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Male">Male</SelectItem>
-                    <SelectItem value="Female">Female</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-3 block">Gender</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {['Male', 'Female'].map((gender) => (
+                      <button
+                        key={gender}
+                        type="button"
+                        onClick={() => handleInputChange('gender', gender as 'Male' | 'Female')}
+                        className={`p-3 rounded-lg border-2 text-sm font-medium transition-all ${
+                          formData.gender === gender
+                            ? 'border-rose-500 bg-rose-50 text-rose-700'
+                            : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                        }`}
+                      >
+                        {gender}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="designation">Designation *</Label>
-                <Select value={designation} onValueChange={(value: 'Student' | 'Working Professional' | 'Business' | 'Freelancer' | 'Other') => setDesignation(value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select your designation" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Student">Student</SelectItem>
-                    <SelectItem value="Working Professional">Working Professional</SelectItem>
-                    <SelectItem value="Business">Business</SelectItem>
-                    <SelectItem value="Freelancer">Freelancer</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-3 block">Designation</Label>
+                  <select
+                    value={formData.designation}
+                    onChange={(e) => handleInputChange('designation', e.target.value)}
+                    className="w-full h-12 px-3 border border-gray-200 rounded-lg focus:border-rose-500 focus:ring-rose-500 text-sm"
+                  >
+                    <option value="Student">Student</option>
+                    <option value="Working Professional">Working Professional</option>
+                    <option value="Business">Business</option>
+                    <option value="Freelancer">Freelancer</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            {/* Professional Information */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-gray-800 border-b pb-2">Professional Information</h3>
-              
-              {(designation === 'Student' || designation === '') && (
-                <div className="space-y-2">
-                  <Label htmlFor="institute" className="flex items-center space-x-2">
-                    <GraduationCap className="w-4 h-4" />
-                    <span>Institute/College</span>
+          {/* Professional Information */}
+          <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center text-xl text-gray-800">
+                {formData.designation === 'Student' ? (
+                  <GraduationCap className="w-5 h-5 mr-2 text-rose-500" />
+                ) : (
+                  <Building2 className="w-5 h-5 mr-2 text-rose-500" />
+                )}
+                Professional Details
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {formData.designation === 'Student' ? (
+                <div>
+                  <Label htmlFor="institute" className="text-sm font-medium text-gray-700 mb-2 block">
+                    Institute/University
                   </Label>
                   <Input
                     id="institute"
-                    type="text"
-                    placeholder="Enter your institute or college name"
-                    value={institute}
-                    onChange={(e) => setInstitute(e.target.value)}
+                    value={formData.institute}
+                    onChange={(e) => handleInputChange('institute', e.target.value)}
+                    placeholder="Enter your institute or university name"
+                    className="h-12 border-gray-200 focus:border-rose-500 focus:ring-rose-500"
                   />
                 </div>
-              )}
-
-              {(designation === 'Working Professional' || designation === 'Business' || designation === 'Freelancer') && (
-                <div className="space-y-2">
-                  <Label htmlFor="company" className="flex items-center space-x-2">
-                    <Building2 className="w-4 h-4" />
-                    <span>Company/Organization</span>
+              ) : (
+                <div>
+                  <Label htmlFor="company" className="text-sm font-medium text-gray-700 mb-2 block">
+                    Company/Organization
                   </Label>
                   <Input
                     id="company"
-                    type="text"
+                    value={formData.company}
+                    onChange={(e) => handleInputChange('company', e.target.value)}
                     placeholder="Enter your company or organization name"
-                    value={company}
-                    onChange={(e) => setCompany(e.target.value)}
+                    className="h-12 border-gray-200 focus:border-rose-500 focus:ring-rose-500"
                   />
                 </div>
               )}
+            </CardContent>
+          </Card>
 
-              <div className="space-y-2">
-                <Label htmlFor="bio">Bio</Label>
+          {/* Personal Information */}
+          <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center text-xl text-gray-800">
+                <Heart className="w-5 h-5 mr-2 text-rose-500" />
+                Personal Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="bio" className="text-sm font-medium text-gray-700 mb-2 block">
+                  Bio
+                </Label>
                 <Textarea
                   id="bio"
-                  placeholder="Tell others about yourself..."
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  rows={3}
+                  value={formData.bio}
+                  onChange={(e) => handleInputChange('bio', e.target.value)}
+                  placeholder="Tell us a bit about yourself..."
+                  className="min-h-[100px] border-gray-200 focus:border-rose-500 focus:ring-rose-500 resize-none"
                 />
               </div>
-            </div>
-          </div>
 
-          {/* Contact & Additional Information */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-gray-800 border-b pb-2">Contact & Additional Information</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="flex items-center space-x-2">
-                  <Phone className="w-4 h-4" />
-                  <span>Phone Number</span>
+              <div>
+                <Label htmlFor="interests" className="text-sm font-medium text-gray-700 mb-2 block">
+                  Interests & Hobbies
+                </Label>
+                <Input
+                  id="interests"
+                  value={formData.interests}
+                  onChange={(e) => handleInputChange('interests', e.target.value)}
+                  placeholder="e.g., Photography, Travel, Cooking, Sports..."
+                  className="h-12 border-gray-200 focus:border-rose-500 focus:ring-rose-500"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Contact Information */}
+          <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center text-xl text-gray-800">
+                <MapPin className="w-5 h-5 mr-2 text-rose-500" />
+                Contact Information
+              </CardTitle>
+              <p className="text-sm text-gray-600 mt-1">
+                This information will only be visible to your connections
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="phone" className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                  <Phone className="w-4 h-4 mr-1" />
+                  Phone Number
                 </Label>
                 <Input
                   id="phone"
-                  type="tel"
-                  placeholder="Enter your phone number"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  value={formData.phone}
+                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                  placeholder="+91 XXXXX XXXXX"
+                  className="h-12 border-gray-200 focus:border-rose-500 focus:ring-rose-500"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="email" className="flex items-center space-x-2">
-                  <Mail className="w-4 h-4" />
-                  <span>Email Address</span>
+              <div>
+                <Label htmlFor="email" className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                  <Mail className="w-4 h-4 mr-1" />
+                  Email Address
                 </Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="Enter your email address"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  placeholder="your.email@example.com"
+                  className="h-12 border-gray-200 focus:border-rose-500 focus:ring-rose-500"
                 />
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            <div className="space-y-2">
-              <Label htmlFor="interests">Interests & Hobbies</Label>
-              <Input
-                id="interests"
-                type="text"
-                placeholder="e.g., Photography, Travel, Technology, Sports..."
-                value={interests}
-                onChange={(e) => setInterests(e.target.value)}
-              />
-            </div>
-          </div>
+          {/* Privacy Settings */}
+          <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center text-xl text-gray-800">
+                {formData.isProfileLocked ? (
+                  <Lock className="w-5 h-5 mr-2 text-rose-500" />
+                ) : (
+                  <Unlock className="w-5 h-5 mr-2 text-rose-500" />
+                )}
+                Privacy Settings
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex-1">
+                  <Label className="text-sm font-medium text-gray-700">Private Profile</Label>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Only your connections can view your profile details
+                  </p>
+                </div>
+                <Switch
+                  checked={formData.isProfileLocked}
+                  onCheckedChange={(checked) => handleInputChange('isProfileLocked', checked)}
+                />
+              </div>
+            </CardContent>
+          </Card>
 
-          <Button
-            onClick={handleSave}
-            className="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white font-semibold py-3"
+          {/* Submit Button */}
+          <Button 
+            type="submit" 
+            className="w-full h-14 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white font-medium text-lg rounded-xl shadow-lg transition-all duration-200 transform hover:scale-[1.02]"
           >
-            {isEditing ? 'Update Profile' : 'Save Profile'}
+            <Save className="w-5 h-5 mr-2" />
+            {isEditing ? 'Update Profile' : 'Create Profile'}
           </Button>
-        </CardContent>
-      </Card>
+        </form>
+      </div>
     </div>
   );
 };
