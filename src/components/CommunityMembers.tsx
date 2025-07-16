@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Search, UserPlus, UserMinus, ArrowLeft, User as UserIcon, Camera, Users, Edit, Trash2, Eye } from 'lucide-react';
+import { Search, UserPlus, UserMinus, ArrowLeft, User as UserIcon, Camera, Users, Edit, Trash2, Eye, Lock, GraduationCap, Building2 } from 'lucide-react';
 import { User, Community } from '@/pages/Index';
 
 interface CommunityMembersProps {
@@ -197,6 +197,16 @@ const CommunityMembers = ({
   };
 
   const handleViewProfile = (member: User) => {
+    // Check if profile is locked and user is not a friend
+    if (member.isProfileLocked && !isConnected(member.id)) {
+      toast({
+        title: "Profile Locked",
+        description: "This user has locked their profile. Only friends can view it.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setSelectedProfile(member);
     setShowProfileView(true);
   };
@@ -262,6 +272,12 @@ const CommunityMembers = ({
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-800">My Profile</h2>
               <div className="flex items-center space-x-2">
+                {user.isProfileLocked && (
+                  <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800">
+                    <Lock className="w-3 h-3 mr-1" />
+                    Private
+                  </Badge>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
@@ -301,15 +317,43 @@ const CommunityMembers = ({
                 </Button>
               </div>
               
-              <div>
+              <div className="flex-1">
                 <h3 className="text-lg font-semibold text-gray-800">{user.name}</h3>
-                <div className="flex items-center space-x-2 mb-1">
+                <div className="flex items-center space-x-2 mb-2">
                   <Badge variant="outline">{user.gender}</Badge>
                   <Badge variant="outline">{user.designation}</Badge>
                 </div>
-                <p className="text-sm text-gray-600">
+                
+                {(user.institute || user.company) && (
+                  <div className="flex items-center space-x-2 mb-1">
+                    {user.designation === 'Student' && user.institute && (
+                      <div className="flex items-center space-x-1 text-sm text-gray-600">
+                        <GraduationCap className="w-4 h-4" />
+                        <span>{user.institute}</span>
+                      </div>
+                    )}
+                    {(user.designation === 'Working Professional' || user.designation === 'Business' || user.designation === 'Freelancer') && user.company && (
+                      <div className="flex items-center space-x-1 text-sm text-gray-600">
+                        <Building2 className="w-4 h-4" />
+                        <span>{user.company}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                <p className="text-sm text-gray-600 mb-1">
                   {user.homeDistrict}, {user.homeState} → {user.currentDistrict}, {user.currentState}
                 </p>
+                
+                {user.bio && (
+                  <p className="text-sm text-gray-700 mt-2">{user.bio}</p>
+                )}
+                
+                {user.interests && (
+                  <p className="text-xs text-gray-600 mt-1">
+                    <span className="font-medium">Interests:</span> {user.interests}
+                  </p>
+                )}
               </div>
             </div>
           </CardContent>
@@ -347,6 +391,8 @@ const CommunityMembers = ({
           ) : (
             filteredMembers.map((member) => {
               const mutualCount = getMutualConnections(member.id).length;
+              const isLocked = member.isProfileLocked && !isConnected(member.id);
+              
               return (
                 <Card key={member.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-6">
@@ -359,7 +405,12 @@ const CommunityMembers = ({
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <h3 className="font-semibold text-gray-800">{member.name}</h3>
+                          <div className="flex items-center space-x-2">
+                            <h3 className="font-semibold text-gray-800">{member.name}</h3>
+                            {isLocked && (
+                              <Lock className="w-4 h-4 text-gray-400" />
+                            )}
+                          </div>
                           <div className="flex items-center space-x-2 mt-1">
                             <Badge variant="outline">{member.gender}</Badge>
                             <Badge variant="outline">{member.designation}</Badge>
@@ -369,18 +420,25 @@ const CommunityMembers = ({
                               </Badge>
                             )}
                           </div>
-                          <p className="text-sm text-gray-600 mt-1">
-                            {member.homeDistrict}, {member.homeState} → {member.currentDistrict}, {member.currentState}
-                          </p>
-                          {mutualCount > 0 && (
-                            <Button
-                              variant="link"
-                              size="sm"
-                              className="p-0 h-auto text-xs text-blue-600"
-                              onClick={() => handleShowMutuals(member)}
-                            >
-                              {mutualCount} mutual connection{mutualCount !== 1 ? 's' : ''}
-                            </Button>
+                          {!isLocked && (
+                            <>
+                              <p className="text-sm text-gray-600 mt-1">
+                                {member.homeDistrict}, {member.homeState} → {member.currentDistrict}, {member.currentState}
+                              </p>
+                              {mutualCount > 0 && (
+                                <Button
+                                  variant="link"
+                                  size="sm"
+                                  className="p-0 h-auto text-xs text-blue-600"
+                                  onClick={() => handleShowMutuals(member)}
+                                >
+                                  {mutualCount} mutual connection{mutualCount !== 1 ? 's' : ''}
+                                </Button>
+                              )}
+                            </>
+                          )}
+                          {isLocked && (
+                            <p className="text-sm text-gray-500 mt-1">Profile is private</p>
                           )}
                         </div>
                       </div>
@@ -496,6 +554,17 @@ const CommunityMembers = ({
               </div>
               
               <div className="space-y-2">
+                {(selectedProfile.institute || selectedProfile.company) && (
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="text-sm font-medium text-gray-700">
+                      {selectedProfile.designation === 'Student' ? 'Institute' : 'Company'}
+                    </p>
+                    <p className="text-gray-600">
+                      {selectedProfile.designation === 'Student' ? selectedProfile.institute : selectedProfile.company}
+                    </p>
+                  </div>
+                )}
+                
                 <div className="bg-gray-50 p-3 rounded-lg">
                   <p className="text-sm font-medium text-gray-700">Home Location</p>
                   <p className="text-gray-600">{selectedProfile.homeDistrict}, {selectedProfile.homeState}</p>
@@ -504,6 +573,34 @@ const CommunityMembers = ({
                   <p className="text-sm font-medium text-gray-700">Current Location</p>
                   <p className="text-gray-600">{selectedProfile.currentDistrict}, {selectedProfile.currentState}</p>
                 </div>
+                
+                {selectedProfile.bio && (
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="text-sm font-medium text-gray-700">Bio</p>
+                    <p className="text-gray-600">{selectedProfile.bio}</p>
+                  </div>
+                )}
+                
+                {selectedProfile.interests && (
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="text-sm font-medium text-gray-700">Interests</p>
+                    <p className="text-gray-600">{selectedProfile.interests}</p>
+                  </div>
+                )}
+                
+                {selectedProfile.phone && isConnected(selectedProfile.id) && (
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="text-sm font-medium text-gray-700">Phone</p>
+                    <p className="text-gray-600">{selectedProfile.phone}</p>
+                  </div>
+                )}
+                
+                {selectedProfile.email && isConnected(selectedProfile.id) && (
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="text-sm font-medium text-gray-700">Email</p>
+                    <p className="text-gray-600">{selectedProfile.email}</p>
+                  </div>
+                )}
               </div>
               
               <div className="flex space-x-2">

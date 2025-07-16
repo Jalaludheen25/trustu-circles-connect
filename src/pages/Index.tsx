@@ -20,6 +20,11 @@ export type User = {
   currentDistrict: string;
   phone?: string;
   email?: string;
+  isProfileLocked?: boolean;
+  institute?: string;
+  company?: string;
+  bio?: string;
+  interests?: string;
 };
 
 export type Community = {
@@ -140,7 +145,18 @@ const Index = () => {
     setUser(prev => ({ ...prev, ...userData } as User));
   };
 
-  const handleProfileCreation = (profileData: { name: string; gender: 'Male' | 'Female'; designation: 'Student' | 'Working Professional' | 'Business' | 'Freelancer' | 'Other' }) => {
+  const handleProfileCreation = (profileData: { 
+    name: string; 
+    gender: 'Male' | 'Female'; 
+    designation: 'Student' | 'Working Professional' | 'Business' | 'Freelancer' | 'Other';
+    isProfileLocked?: boolean;
+    institute?: string;
+    company?: string;
+    bio?: string;
+    phone?: string;
+    email?: string;
+    interests?: string;
+  }) => {
     setUser(prev => ({ ...prev, ...profileData } as User));
     setCurrentStep('join-community');
   };
