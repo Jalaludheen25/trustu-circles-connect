@@ -274,29 +274,6 @@ const CommunityFeed = ({
           </CardContent>
         </Card>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          <Button
-            onClick={() => onNavigate('add-service')}
-            className="h-20 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg"
-          >
-            <div className="text-center">
-              <Plus className="w-6 h-6 mx-auto mb-1" />
-              <span className="font-medium">Add Service</span>
-            </div>
-          </Button>
-          
-          <Button
-            onClick={() => onNavigate('sell-product')}
-            className="h-20 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg"
-          >
-            <div className="text-center">
-              <Plus className="w-6 h-6 mx-auto mb-1" />
-              <span className="font-medium">Sell Product</span>
-            </div>
-          </Button>
-        </div>
-
         {/* Listings Section with Tabs */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-6">
@@ -305,27 +282,48 @@ const CommunityFeed = ({
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-4 w-full mb-6">
-              <TabsTrigger value="all" className="flex items-center space-x-2">
-                <span>All Listings</span>
-                <Badge variant="secondary" className="ml-1">{tabCounts.all}</Badge>
-              </TabsTrigger>
-              <TabsTrigger value="accommodation" className="flex items-center space-x-2">
-                <Home className="w-4 h-4" />
-                <span>Accommodation</span>
-                <Badge variant="secondary" className="ml-1">{tabCounts.accommodation}</Badge>
-              </TabsTrigger>
-              <TabsTrigger value="proxy" className="flex items-center space-x-2">
-                <User className="w-4 h-4" />
-                <span>Proxy</span>
-                <Badge variant="secondary" className="ml-1">{tabCounts.proxy}</Badge>
-              </TabsTrigger>
-              <TabsTrigger value="product" className="flex items-center space-x-2">
-                <Briefcase className="w-4 h-4" />
-                <span>Buy & Sell</span>
-                <Badge variant="secondary" className="ml-1">{tabCounts.product}</Badge>
-              </TabsTrigger>
-            </TabsList>
+            <div className="flex items-center justify-between mb-6">
+              <TabsList className="grid grid-cols-4 w-full max-w-lg">
+                <TabsTrigger value="all" className="flex items-center space-x-2">
+                  <span>All</span>
+                  <Badge variant="secondary" className="ml-1">{tabCounts.all}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="accommodation" className="flex items-center space-x-2">
+                  <Home className="w-4 h-4" />
+                  <span>Accommodation</span>
+                  <Badge variant="secondary" className="ml-1">{tabCounts.accommodation}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="proxy" className="flex items-center space-x-2">
+                  <User className="w-4 h-4" />
+                  <span>Proxy</span>
+                  <Badge variant="secondary" className="ml-1">{tabCounts.proxy}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="product" className="flex items-center space-x-2">
+                  <Briefcase className="w-4 h-4" />
+                  <span>Buy & Sell</span>
+                  <Badge variant="secondary" className="ml-1">{tabCounts.product}</Badge>
+                </TabsTrigger>
+              </TabsList>
+
+              <div className="flex space-x-2">
+                <Button
+                  onClick={() => onNavigate('add-service')}
+                  size="sm"
+                  className="bg-blue-500 hover:bg-blue-600"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Service
+                </Button>
+                <Button
+                  onClick={() => onNavigate('sell-product')}
+                  size="sm"
+                  className="bg-green-500 hover:bg-green-600"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Sell Product
+                </Button>
+              </div>
+            </div>
 
             <TabsContent value={activeTab}>
               {filteredListings.length === 0 ? (
