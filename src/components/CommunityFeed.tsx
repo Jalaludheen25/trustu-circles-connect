@@ -507,45 +507,51 @@ const CommunityFeed = ({
                   </div>
                   <div className="flex items-center space-x-2 mt-1">
                     <Badge variant="outline" className="border-rose-200 text-rose-700 bg-rose-50">
-                      {user.designation}
+                      {currentCommunityName}
                     </Badge>
-                    <Badge variant="outline" className="border-blue-200 text-blue-700 bg-blue-50">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onNavigate('connections')}
+                      className="border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 h-6 px-2 text-xs"
+                    >
                       {connections.length} connections
-                    </Badge>
+                    </Button>
                   </div>
                 </div>
               </div>
               
-              <div className="flex flex-col space-y-2">
-                {(isVisiting || appliedFilter) && (
-                  <Button
-                    onClick={onBackToMyCommunity}
-                    variant="outline"
-                    className="border-rose-200 text-rose-700 hover:bg-rose-50"
-                  >
-                    Back to My Community
-                  </Button>
-                )}
-                <div className="flex space-x-2">
-                  <Button
-                    onClick={() => onNavigate('add-service')}
-                    size="sm"
-                    className="bg-blue-500 hover:bg-blue-600"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Service
-                  </Button>
-                  <Button
-                    onClick={() => onNavigate('sell-product')}
-                    size="sm"
-                    className="bg-green-500 hover:bg-green-600"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Sell Product
-                  </Button>
-                </div>
+              <div className="flex space-x-2">
+                <Button
+                  onClick={() => onNavigate('add-service')}
+                  size="sm"
+                  className="bg-blue-500 hover:bg-blue-600"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Service
+                </Button>
+                <Button
+                  onClick={() => onNavigate('sell-product')}
+                  size="sm"
+                  className="bg-green-500 hover:bg-green-600"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Sell Product
+                </Button>
               </div>
             </div>
+            
+            {(isVisiting || appliedFilter) && (
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <Button
+                  onClick={onBackToMyCommunity}
+                  variant="outline"
+                  className="border-rose-200 text-rose-700 hover:bg-rose-50"
+                >
+                  Back to My Community
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -557,22 +563,22 @@ const CommunityFeed = ({
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-4 w-full max-w-lg mb-6">
-              <TabsTrigger value="all" className="flex items-center space-x-2">
-                <span>All</span>
+            <TabsList className="grid grid-cols-4 w-full max-w-2xl mb-6 h-12">
+              <TabsTrigger value="all" className="flex items-center space-x-2 text-sm font-medium">
+                <span>All Listings</span>
                 <Badge variant="secondary" className="ml-1">{tabCounts.all}</Badge>
               </TabsTrigger>
-              <TabsTrigger value="accommodation" className="flex items-center space-x-2">
+              <TabsTrigger value="accommodation" className="flex items-center space-x-2 text-sm font-medium">
                 <Home className="w-4 h-4" />
                 <span>Accommodation</span>
                 <Badge variant="secondary" className="ml-1">{tabCounts.accommodation}</Badge>
               </TabsTrigger>
-              <TabsTrigger value="proxy" className="flex items-center space-x-2">
+              <TabsTrigger value="proxy" className="flex items-center space-x-2 text-sm font-medium">
                 <User className="w-4 h-4" />
                 <span>Proxy</span>
                 <Badge variant="secondary" className="ml-1">{tabCounts.proxy}</Badge>
               </TabsTrigger>
-              <TabsTrigger value="product" className="flex items-center space-x-2">
+              <TabsTrigger value="product" className="flex items-center space-x-2 text-sm font-medium">
                 <Briefcase className="w-4 h-4" />
                 <span>Buy & Sell</span>
                 <Badge variant="secondary" className="ml-1">{tabCounts.product}</Badge>

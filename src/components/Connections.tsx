@@ -1,26 +1,26 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Search, UserPlus, UserMinus, ArrowLeft, User as UserIcon, Camera, Users, Edit, Trash2, Eye } from 'lucide-react';
-import { User, Community } from '@/pages/Index';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { User as UserType, Community } from '@/pages/Index';
+import { Plus, Users, User, MapPin, ArrowLeft, Settings } from 'lucide-react';
 
 interface ConnectionsProps {
-  user: User;
+  user: UserType;
   community: Community;
-  connections: User[];
-  onAddConnection: (user: User) => void;
-  onRemoveConnection: (userId: string) => void;
+  connections: UserType[];
+  onAddConnection: (newConnection: UserType) => void;
+  onRemoveConnection: (connectionId: string) => void;
   onBack: () => void;
   appliedFilter?: string;
   isVisiting?: boolean;
   visitingCommunityName?: string;
-  onDeleteProfile?: () => void;
-  onEditProfile?: () => void;
+  onDeleteProfile: () => void;
+  onEditProfile: () => void;
 }
 
 const Connections = ({ 
@@ -31,512 +31,278 @@ const Connections = ({
   onRemoveConnection, 
   onBack,
   appliedFilter,
-  isVisiting = false,
+  isVisiting,
   visitingCommunityName,
   onDeleteProfile,
   onEditProfile
 }: ConnectionsProps) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showMutualConnections, setShowMutualConnections] = useState(false);
-  const [selectedUserMutuals, setSelectedUserMutuals] = useState<User[]>([]);
-  const [selectedUserName, setSelectedUserName] = useState('');
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showProfileView, setShowProfileView] = useState(false);
-  const [selectedProfile, setSelectedProfile] = useState<User | null>(null);
-
-  // Mock community members with Malabar region names
-  const communityMembers: User[] = [
-    {
-      id: '2',
-      name: 'Fathima Ashraf',
-      gender: 'Female' as const,
-      designation: 'Student' as const,
-      homeState: 'Kerala',
-      homeDistrict: 'Malappuram',
-      currentState: 'Delhi',
-      currentDistrict: 'South East Delhi',
-    },
-    {
-      id: '3',
-      name: 'Mohammed Salim',
-      gender: 'Male' as const,
-      designation: 'Working Professional' as const,
-      homeState: 'Kerala',
-      homeDistrict: 'Malappuram',
-      currentState: 'Delhi',
-      currentDistrict: 'South East Delhi',
-    },
-    {
-      id: '4',
-      name: 'Anitha Menon',
-      gender: 'Female' as const,
-      designation: 'Freelancer' as const,
-      homeState: 'Kerala',
-      homeDistrict: 'Malappuram',
-      currentState: 'Delhi',
-      currentDistrict: 'South East Delhi',
-    },
-    {
-      id: '5',
-      name: 'George Thomas',
-      gender: 'Male' as const,
-      designation: 'Business' as const,
-      homeState: 'Kerala',
-      homeDistrict: 'Malappuram',
-      currentState: 'Delhi',
-      currentDistrict: 'South East Delhi',
-    }
-  ];
-
-  const filteredMembers = communityMembers.filter(member => {
-    const matchesSearch = !searchTerm || 
-      member.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const isNotCurrentUser = member.id !== user.id;
-    
-    // Filter based on current community context
-    let belongsToCurrentCommunity = true;
-    if (appliedFilter) {
-      // Parse filter to determine community criteria
-      if (appliedFilter.includes(' - ')) {
-        // District-level filter like "Malappuram - Delhi"
-        const [homeDistrict, currentLocation] = appliedFilter.split(' - ');
-        belongsToCurrentCommunity = member.homeDistrict === homeDistrict && 
-          (member.currentState === currentLocation || member.currentDistrict === currentLocation);
-      } else if (appliedFilter.includes(' in ')) {
-        // State-level filter like "Keralites in Delhi"
-        const parts = appliedFilter.split(' in ');
-        const homeStateMap: { [key: string]: string } = {
-          'Keralites': 'Kerala',
-          'Tamilians': 'Tamil Nadu',
-          'Delhites': 'Delhi'
-        };
-        const homeState = homeStateMap[parts[0]] || parts[0];
-        const currentState = parts[1];
-        
-        belongsToCurrentCommunity = member.homeState === homeState && member.currentState === currentState;
-      }
-    } else if (isVisiting && visitingCommunityName) {
-      // Filter for visiting community
-      if (visitingCommunityName.includes(' in ')) {
-        const parts = visitingCommunityName.split(' in ');
-        const homeStateMap: { [key: string]: string } = {
-          'Keralites': 'Kerala',
-          'Tamilians': 'Tamil Nadu',
-          'Delhites': 'Delhi'
-        };
-        const homeState = homeStateMap[parts[0]] || parts[0];
-        const currentState = parts[1];
-        
-        belongsToCurrentCommunity = member.homeState === homeState && member.currentState === currentState;
-      } else {
-        belongsToCurrentCommunity = member.homeState === visitingCommunityName && member.currentState === visitingCommunityName;
-      }
-    } else {
-      // Default to user's own community
-      belongsToCurrentCommunity = member.homeState === user.homeState && 
-        member.homeDistrict === user.homeDistrict &&
-        member.currentState === user.currentState && 
-        member.currentDistrict === user.currentDistrict;
-    }
-    
-    return matchesSearch && isNotCurrentUser && belongsToCurrentCommunity;
+  const [newConnection, setNewConnection] = useState<Partial<UserType>>({
+    name: '',
+    gender: 'Male',
+    designation: 'Student',
+    homeState: user.homeState,
+    homeDistrict: user.homeDistrict,
+    currentState: user.currentState,
+    currentDistrict: user.currentDistrict
   });
+  const [showContactDialog, setShowContactDialog] = useState(false);
+  const [selectedConnection, setSelectedConnection] = useState<UserType | null>(null);
 
-  const isConnected = (memberId: string) => {
-    return connections.some(conn => conn.id === memberId);
-  };
+  const currentCommunityName = isVisiting && visitingCommunityName ? visitingCommunityName : community.name;
 
-  const handleToggleConnection = (member: User) => {
-    if (isConnected(member.id)) {
-      onRemoveConnection(member.id);
-    } else {
-      onAddConnection(member);
-    }
-  };
-
-  const getMutualConnections = (memberId: string): User[] => {
-    // Get actual mutual connections from community members who are connected to both users
-    const mutuals = communityMembers.filter(member => {
-      // Must be connected to current user and not be the member we're checking
-      const isConnectedToCurrentUser = connections.some(conn => conn.id === member.id);
-      const isNotTheMemberWeAreChecking = member.id !== memberId;
-      const isNotCurrentUser = member.id !== user.id;
-      
-      // For demo purposes, we'll simulate that some members are mutual connections
-      // In a real app, you'd check if this member is also connected to the target member
-      return isConnectedToCurrentUser && isNotTheMemberWeAreChecking && isNotCurrentUser;
+  const handleAddConnection = (e: React.FormEvent) => {
+    e.preventDefault();
+    onAddConnection(newConnection as UserType);
+    setNewConnection({
+      name: '',
+      gender: 'Male',
+      designation: 'Student',
+      homeState: user.homeState,
+      homeDistrict: user.homeDistrict,
+      currentState: user.currentState,
+      currentDistrict: user.currentDistrict
     });
-    
-    return mutuals.slice(0, 2); // Limit to 2 for demo
   };
 
-  const handleShowMutuals = (member: User) => {
-    const mutuals = getMutualConnections(member.id);
-    setSelectedUserMutuals(mutuals);
-    setSelectedUserName(member.name);
-    setShowMutualConnections(true);
-  };
-
-  const handleViewProfile = (member: User) => {
-    setSelectedProfile(member);
-    setShowProfileView(true);
-  };
-
-  // Generate community name for "My Circle" section
-  const getCurrentCommunityName = () => {
-    if (isVisiting && visitingCommunityName) {
-      return visitingCommunityName;
-    }
-    
-    if (appliedFilter) {
-      return appliedFilter;
-    }
-    
-    return community.name;
-  };
-
-  const currentCommunityName = getCurrentCommunityName();
-
-  const handleDeleteProfile = () => {
-    setShowDeleteConfirm(true);
-  };
-
-  const confirmDeleteProfile = () => {
-    if (onDeleteProfile) {
-      onDeleteProfile();
-    }
-    setShowDeleteConfirm(false);
-  };
-
-  const handleEditProfile = () => {
-    if (onEditProfile) {
-      onEditProfile();
-    }
+  const handleContact = (connection: UserType) => {
+    setSelectedConnection(connection);
+    setShowContactDialog(true);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
+    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-white to-blue-50">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm" onClick={onBack}>
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
-              <h1 className="text-xl font-bold text-gray-800">My Profile</h1>
+      <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onBack}
+              className="border-gray-200 hover:border-rose-300"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Feed
+            </Button>
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-rose-500 to-pink-500 rounded-full flex items-center justify-center">
+                <Users className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">My Circle</h1>
+                <p className="text-sm text-gray-600">{currentCommunityName}</p>
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center space-x-2"
-                onClick={handleEditProfile}
-              >
-                <Edit className="w-4 h-4" />
-                <span>Edit</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center space-x-2 text-red-600 hover:text-red-700"
-                onClick={handleDeleteProfile}
-              >
-                <Trash2 className="w-4 h-4" />
-                <span>Delete</span>
-              </Button>
-            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onEditProfile}
+              className="border-gray-200 hover:border-rose-300"
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              My Profile
+            </Button>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Profile Section */}
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <div className="flex flex-col items-center text-center mb-6">
-              {/* Profile Photo */}
-              <div className="relative mb-4">
-                <Avatar className="w-24 h-24">
-                  <AvatarImage src="" />
-                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-green-500 text-white text-xl">
-                    {user.name.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0"
-                  onClick={() => {/* Handle photo edit */}}
-                >
-                  <Camera className="w-4 h-4" />
-                </Button>
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Community Members Section */}
+        <Card className="mb-8 border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Users className="w-5 h-5" />
+              <span>Community Members</span>
+              <Badge variant="outline" className="ml-2">{connections.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {connections.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Users className="w-8 h-8 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-700 mb-2">No connections yet</h3>
+                <p className="text-gray-500">Connect with community members to build your network!</p>
               </div>
-              
-              {/* User Info */}
-              <h2 className="text-xl font-semibold text-gray-800 mb-2">{user.name}</h2>
-              <div className="flex items-center space-x-2 mb-2">
-                <Badge variant="outline">{user.gender}</Badge>
-                <Badge variant="outline">{user.designation}</Badge>
-              </div>
-              <p className="text-sm text-gray-600">
-                {user.homeDistrict}, {user.homeState} → {user.currentDistrict}, {user.currentState}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* My Circle Section */}
-        <div className="mb-4">
-          <div className="flex items-center space-x-2 mb-4">
-            <Users className="w-5 h-5 text-blue-500" />
-            <h2 className="text-lg font-semibold text-gray-800">
-              My Circle <span className="text-sm font-normal text-gray-500">({currentCommunityName})</span>
-            </h2>
-          </div>
-
-          {/* Search Bar */}
-          <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder="Search community members..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
-
-        {/* Members List */}
-        <div className="space-y-4">
-          {filteredMembers.length === 0 ? (
-            <Card className="p-8 text-center">
-              <p className="text-gray-500">No community members found.</p>
-            </Card>
-          ) : (
-            filteredMembers.map((member) => {
-              const mutualCount = getMutualConnections(member.id).length;
-              return (
-                <Card key={member.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {connections.map((connection) => (
+                  <Card key={connection.id} className="border border-gray-200 hover:shadow-md transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-3 mb-3">
                         <Avatar className="w-12 h-12">
                           <AvatarImage src="" />
-                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-green-500 text-white">
-                            {member.name.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <h3 className="font-semibold text-gray-800">{member.name}</h3>
-                          <div className="flex items-center space-x-2 mt-1">
-                            <Badge variant="outline">{member.gender}</Badge>
-                            <Badge variant="outline">{member.designation}</Badge>
-                          </div>
-                          <p className="text-sm text-gray-600 mt-1">
-                            {member.homeDistrict}, {member.homeState} → {member.currentDistrict}, {member.currentState}
-                          </p>
-                          {mutualCount > 0 && (
-                            <Button
-                              variant="link"
-                              size="sm"
-                              className="p-0 h-auto text-xs text-blue-600"
-                              onClick={() => handleShowMutuals(member)}
-                            >
-                              {mutualCount} mutual connection{mutualCount !== 1 ? 's' : ''}
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleViewProfile(member)}
-                          className="flex items-center space-x-2"
-                        >
-                          <Eye className="w-4 h-4" />
-                          <span>View</span>
-                        </Button>
-                        <Button
-                          onClick={() => handleToggleConnection(member)}
-                          variant={isConnected(member.id) ? "destructive" : "default"}
-                          size="sm"
-                          className="flex items-center space-x-2"
-                        >
-                          {isConnected(member.id) ? (
-                            <>
-                              <UserMinus className="w-4 h-4" />
-                              <span>Remove</span>
-                            </>
-                          ) : (
-                            <>
-                              <UserPlus className="w-4 h-4" />
-                              <span>Connect</span>
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })
-          )}
-        </div>
-
-        {/* My Connections Section */}
-        {connections.length > 0 && (
-          <div className="mt-8">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">My Connections ({connections.length})</h2>
-            <div className="space-y-4">
-              {connections.map((connection) => (
-                <Card key={connection.id} className="bg-blue-50">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="w-10 h-10">
-                          <AvatarImage src="" />
-                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-green-500 text-white">
+                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white">
                             {connection.name.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        <div>
-                          <h4 className="font-medium text-gray-800">{connection.name}</h4>
-                          <div className="flex items-center space-x-2">
-                            <Badge variant="secondary" className="text-xs">{connection.gender}</Badge>
-                            <Badge variant="secondary" className="text-xs">{connection.designation}</Badge>
-                          </div>
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900">{connection.name}</h4>
+                          <p className="text-sm text-gray-600">{connection.designation}</p>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      
+                      <div className="space-y-2 text-sm text-gray-600">
+                        <div className="flex items-center">
+                          <MapPin className="w-4 h-4 mr-2" />
+                          <span>{connection.homeDistrict}, {connection.homeState}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <User className="w-4 h-4 mr-2" />
+                          <span>{connection.currentDistrict}, {connection.currentState}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-between items-center mt-4">
                         <Button
-                          variant="outline"
                           size="sm"
-                          onClick={() => handleViewProfile(connection)}
-                          className="flex items-center space-x-2"
+                          variant="outline"
+                          onClick={() => handleContact(connection)}
+                          className="text-xs"
                         >
-                          <Eye className="w-4 h-4" />
+                          Contact
                         </Button>
                         <Button
-                          onClick={() => onRemoveConnection(connection.id)}
-                          variant="ghost"
                           size="sm"
-                          className="text-red-600 hover:text-red-700"
+                          variant="destructive"
+                          onClick={() => onRemoveConnection(connection.id)}
+                          className="text-xs"
                         >
-                          <UserMinus className="w-4 h-4" />
+                          Remove
                         </Button>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Add Connection Section */}
+        <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Plus className="w-5 h-5" />
+              <span>Add New Connection</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleAddConnection} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                  <Input
+                    value={newConnection.name}
+                    onChange={(e) => setNewConnection(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Enter name"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Designation</label>
+                  <Select value={newConnection.designation} onValueChange={(value) => setNewConnection(prev => ({ ...prev, designation: value as any }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select designation" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Student">Student</SelectItem>
+                      <SelectItem value="Working Professional">Working Professional</SelectItem>
+                      <SelectItem value="Business">Business</SelectItem>
+                      <SelectItem value="Freelancer">Freelancer</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Home State</label>
+                  <Input
+                    value={newConnection.homeState}
+                    onChange={(e) => setNewConnection(prev => ({ ...prev, homeState: e.target.value }))}
+                    placeholder="Enter home state"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Home District</label>
+                  <Input
+                    value={newConnection.homeDistrict}
+                    onChange={(e) => setNewConnection(prev => ({ ...prev, homeDistrict: e.target.value }))}
+                    placeholder="Enter home district"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Current State</label>
+                  <Input
+                    value={newConnection.currentState}
+                    onChange={(e) => setNewConnection(prev => ({ ...prev, currentState: e.target.value }))}
+                    placeholder="Enter current state"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Current District</label>
+                  <Input
+                    value={newConnection.currentDistrict}
+                    onChange={(e) => setNewConnection(prev => ({ ...prev, currentDistrict: e.target.value }))}
+                    placeholder="Enter current district"
+                  />
+                </div>
+              </div>
+
+              <Button type="submit" className="w-full bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Connection
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Profile View Dialog */}
-      <Dialog open={showProfileView} onOpenChange={setShowProfileView}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Profile Details</DialogTitle>
-          </DialogHeader>
-          {selectedProfile && (
-            <div className="space-y-4">
-              <div className="flex flex-col items-center text-center">
-                <Avatar className="w-20 h-20 mb-3">
-                  <AvatarImage src="" />
-                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-green-500 text-white text-lg">
-                    {selectedProfile.name.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <h3 className="text-xl font-semibold text-gray-800">{selectedProfile.name}</h3>
-                <div className="flex items-center space-x-2 mt-2">
-                  <Badge variant="outline">{selectedProfile.gender}</Badge>
-                  <Badge variant="outline">{selectedProfile.designation}</Badge>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <p className="text-sm font-medium text-gray-700">Home Location</p>
-                  <p className="text-gray-600">{selectedProfile.homeDistrict}, {selectedProfile.homeState}</p>
-                </div>
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <p className="text-sm font-medium text-gray-700">Current Location</p>
-                  <p className="text-gray-600">{selectedProfile.currentDistrict}, {selectedProfile.currentState}</p>
-                </div>
-              </div>
-              
-              <div className="flex space-x-2">
-                <Button
-                  onClick={() => handleToggleConnection(selectedProfile)}
-                  variant={isConnected(selectedProfile.id) ? "destructive" : "default"}
-                  className="flex-1"
-                >
-                  {isConnected(selectedProfile.id) ? 'Remove Connection' : 'Connect'}
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Mutual Connections Dialog */}
-      <Dialog open={showMutualConnections} onOpenChange={setShowMutualConnections}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Mutual Connections with {selectedUserName}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            {selectedUserMutuals.length === 0 ? (
-              <p className="text-gray-500 text-center py-4">No mutual connections found.</p>
-            ) : (
-              selectedUserMutuals.map((mutual) => (
-                <div key={mutual.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                  <Avatar className="w-10 h-10">
-                    <AvatarImage src="" />
-                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-green-500 text-white">
-                      {mutual.name.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h4 className="font-medium text-gray-800">{mutual.name}</h4>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="secondary" className="text-xs">{mutual.gender}</Badge>
-                      <Badge variant="secondary" className="text-xs">{mutual.designation}</Badge>
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Profile Confirmation Dialog */}
-      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+      {/* Contact Dialog */}
+      <Dialog open={showContactDialog} onOpenChange={setShowContactDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Profile</DialogTitle>
+            <DialogTitle>Contact {selectedConnection?.name}</DialogTitle>
           </DialogHeader>
-          <p className="text-gray-600">Are you sure you want to delete your profile? This action cannot be undone.</p>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowDeleteConfirm(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={confirmDeleteProfile}
-            >
-              Delete Profile
-            </Button>
-          </DialogFooter>
+          <div className="space-y-4">
+            <div className="flex items-center space-x-3">
+              <Avatar className="w-12 h-12">
+                <AvatarImage src="" />
+                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white">
+                  {selectedConnection?.name.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h4 className="font-semibold">{selectedConnection?.name}</h4>
+                <p className="text-sm text-gray-600">{selectedConnection?.designation}</p>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              {selectedConnection?.phone && (
+                <div className="flex items-center space-x-2">
+                  <span className="font-medium">Phone:</span>
+                  <span>{selectedConnection.phone}</span>
+                </div>
+              )}
+              {selectedConnection?.email && (
+                <div className="flex items-center space-x-2">
+                  <span className="font-medium">Email:</span>
+                  <span>{selectedConnection.email}</span>
+                </div>
+              )}
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
