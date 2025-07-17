@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -5,9 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { User as UserType, Community } from '@/pages/Index';
-import { Plus, Users, User, MapPin, ArrowLeft, Settings } from 'lucide-react';
+import { Plus, Users, User, MapPin, ArrowLeft, Settings, Search, UserPlus, UserMinus } from 'lucide-react';
 
 interface ConnectionsProps {
   user: UserType;
@@ -36,33 +36,239 @@ const Connections = ({
   onDeleteProfile,
   onEditProfile
 }: ConnectionsProps) => {
-  const [newConnection, setNewConnection] = useState<Partial<UserType>>({
-    name: '',
-    gender: 'Male',
-    designation: 'Student',
-    homeState: user.homeState,
-    homeDistrict: user.homeDistrict,
-    currentState: user.currentState,
-    currentDistrict: user.currentDistrict
-  });
+  const [searchTerm, setSearchTerm] = useState('');
   const [showContactDialog, setShowContactDialog] = useState(false);
   const [selectedConnection, setSelectedConnection] = useState<UserType | null>(null);
+  const [showAllMembers, setShowAllMembers] = useState(false);
 
   const currentCommunityName = isVisiting && visitingCommunityName ? visitingCommunityName : community.name;
 
-  const handleAddConnection = (e: React.FormEvent) => {
-    e.preventDefault();
-    onAddConnection(newConnection as UserType);
-    setNewConnection({
-      name: '',
-      gender: 'Male',
-      designation: 'Student',
+  // Generate 20 community members
+  const communityMembers: UserType[] = [
+    {
+      id: '2',
+      name: 'Fathima Ashraf',
+      gender: 'Female' as const,
+      designation: 'Student' as const,
       homeState: user.homeState,
       homeDistrict: user.homeDistrict,
       currentState: user.currentState,
-      currentDistrict: user.currentDistrict
-    });
+      currentDistrict: user.currentDistrict,
+    },
+    {
+      id: '3',
+      name: 'Mohammed Salim',
+      gender: 'Male' as const,
+      designation: 'Working Professional' as const,
+      homeState: user.homeState,
+      homeDistrict: user.homeDistrict,
+      currentState: user.currentState,
+      currentDistrict: user.currentDistrict,
+    },
+    {
+      id: '4',
+      name: 'Anitha Menon',
+      gender: 'Female' as const,
+      designation: 'Freelancer' as const,
+      homeState: user.homeState,
+      homeDistrict: user.homeDistrict,
+      currentState: user.currentState,
+      currentDistrict: user.currentDistrict,
+    },
+    {
+      id: '5',
+      name: 'George Thomas',
+      gender: 'Male' as const,
+      designation: 'Business' as const,
+      homeState: user.homeState,
+      homeDistrict: user.homeDistrict,
+      currentState: user.currentState,
+      currentDistrict: user.currentDistrict,
+    },
+    {
+      id: '6',
+      name: 'Priya Nair',
+      gender: 'Female' as const,
+      designation: 'Student' as const,
+      homeState: user.homeState,
+      homeDistrict: user.homeDistrict,
+      currentState: user.currentState,
+      currentDistrict: user.currentDistrict,
+    },
+    {
+      id: '7',
+      name: 'Rashid Ahmed',
+      gender: 'Male' as const,
+      designation: 'Working Professional' as const,
+      homeState: user.homeState,
+      homeDistrict: user.homeDistrict,
+      currentState: user.currentState,
+      currentDistrict: user.currentDistrict,
+    },
+    {
+      id: '8',
+      name: 'Deepika Sharma',
+      gender: 'Female' as const,
+      designation: 'Freelancer' as const,
+      homeState: user.homeState,
+      homeDistrict: user.homeDistrict,
+      currentState: user.currentState,
+      currentDistrict: user.currentDistrict,
+    },
+    {
+      id: '9',
+      name: 'Arjun Krishnan',
+      gender: 'Male' as const,
+      designation: 'Student' as const,
+      homeState: user.homeState,
+      homeDistrict: user.homeDistrict,
+      currentState: user.currentState,
+      currentDistrict: user.currentDistrict,
+    },
+    {
+      id: '10',
+      name: 'Meera Pillai',
+      gender: 'Female' as const,
+      designation: 'Business' as const,
+      homeState: user.homeState,
+      homeDistrict: user.homeDistrict,
+      currentState: user.currentState,
+      currentDistrict: user.currentDistrict,
+    },
+    {
+      id: '11',
+      name: 'Suresh Kumar',
+      gender: 'Male' as const,
+      designation: 'Working Professional' as const,
+      homeState: user.homeState,
+      homeDistrict: user.homeDistrict,
+      currentState: user.currentState,
+      currentDistrict: user.currentDistrict,
+    },
+    {
+      id: '12',
+      name: 'Kavya Nambiar',
+      gender: 'Female' as const,
+      designation: 'Student' as const,
+      homeState: user.homeState,
+      homeDistrict: user.homeDistrict,
+      currentState: user.currentState,
+      currentDistrict: user.currentDistrict,
+    },
+    {
+      id: '13',
+      name: 'Ravi Menon',
+      gender: 'Male' as const,
+      designation: 'Freelancer' as const,
+      homeState: user.homeState,
+      homeDistrict: user.homeDistrict,
+      currentState: user.currentState,
+      currentDistrict: user.currentDistrict,
+    },
+    {
+      id: '14',
+      name: 'Sneha Iyer',
+      gender: 'Female' as const,
+      designation: 'Business' as const,
+      homeState: user.homeState,
+      homeDistrict: user.homeDistrict,
+      currentState: user.currentState,
+      currentDistrict: user.currentDistrict,
+    },
+    {
+      id: '15',
+      name: 'Arun Nair',
+      gender: 'Male' as const,
+      designation: 'Working Professional' as const,
+      homeState: user.homeState,
+      homeDistrict: user.homeDistrict,
+      currentState: user.currentState,
+      currentDistrict: user.currentDistrict,
+    },
+    {
+      id: '16',
+      name: 'Divya Krishnan',
+      gender: 'Female' as const,
+      designation: 'Student' as const,
+      homeState: user.homeState,
+      homeDistrict: user.homeDistrict,
+      currentState: user.currentState,
+      currentDistrict: user.currentDistrict,
+    },
+    {
+      id: '17',
+      name: 'Kiran Jose',
+      gender: 'Male' as const,
+      designation: 'Freelancer' as const,
+      homeState: user.homeState,
+      homeDistrict: user.homeDistrict,
+      currentState: user.currentState,
+      currentDistrict: user.currentDistrict,
+    },
+    {
+      id: '18',
+      name: 'Lakshmi Warrier',
+      gender: 'Female' as const,
+      designation: 'Business' as const,
+      homeState: user.homeState,
+      homeDistrict: user.homeDistrict,
+      currentState: user.currentState,
+      currentDistrict: user.currentDistrict,
+    },
+    {
+      id: '19',
+      name: 'Vinod Kumar',
+      gender: 'Male' as const,
+      designation: 'Working Professional' as const,
+      homeState: user.homeState,
+      homeDistrict: user.homeDistrict,
+      currentState: user.currentState,
+      currentDistrict: user.currentDistrict,
+    },
+    {
+      id: '20',
+      name: 'Anjali Menon',
+      gender: 'Female' as const,
+      designation: 'Student' as const,
+      homeState: user.homeState,
+      homeDistrict: user.homeDistrict,
+      currentState: user.currentState,
+      currentDistrict: user.currentDistrict,
+    },
+    {
+      id: '21',
+      name: 'Rajesh Nair',
+      gender: 'Male' as const,
+      designation: 'Freelancer' as const,
+      homeState: user.homeState,
+      homeDistrict: user.homeDistrict,
+      currentState: user.currentState,
+      currentDistrict: user.currentDistrict,
+    }
+  ];
+
+  const isConnected = (memberId: string) => {
+    return connections.some(conn => conn.id === memberId);
   };
+
+  const handleToggleConnection = (member: UserType) => {
+    if (isConnected(member.id)) {
+      onRemoveConnection(member.id);
+    } else {
+      onAddConnection(member);
+    }
+  };
+
+  const filteredMembers = communityMembers.filter(member => {
+    const matchesSearch = !searchTerm || 
+      member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      member.designation.toLowerCase().includes(searchTerm.toLowerCase());
+    const isNotCurrentUser = member.id !== user.id;
+    
+    return matchesSearch && isNotCurrentUser;
+  });
+
+  const displayedMembers = showAllMembers ? filteredMembers : filteredMembers.slice(0, 6);
 
   const handleContact = (connection: UserType) => {
     setSelectedConnection(connection);
@@ -108,25 +314,134 @@ const Connections = ({
       </header>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Community Members Section */}
+        {/* Search and Controls */}
         <Card className="mb-8 border-0 shadow-lg bg-white/80 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Users className="w-5 h-5" />
-              <span>Community Members</span>
-              <Badge variant="outline" className="ml-2">{connections.length}</Badge>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Users className="w-5 h-5" />
+                <span>Community Members</span>
+                <Badge variant="outline" className="ml-2">{filteredMembers.length}</Badge>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAllMembers(!showAllMembers)}
+                className="border-gray-200 hover:border-rose-300"
+              >
+                {showAllMembers ? 'Show Less' : 'See All Members'}
+              </Button>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {connections.length === 0 ? (
+            <div className="relative mb-6">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Search community members..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Community Members Section */}
+        <Card className="mb-8 border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+          <CardContent className="p-6">
+            {displayedMembers.length === 0 ? (
               <div className="text-center py-8">
                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Users className="w-8 h-8 text-gray-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-700 mb-2">No connections yet</h3>
-                <p className="text-gray-500">Connect with community members to build your network!</p>
+                <h3 className="text-lg font-semibold text-gray-700 mb-2">No members found</h3>
+                <p className="text-gray-500">Try adjusting your search terms</p>
               </div>
             ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {displayedMembers.map((member) => (
+                  <Card key={member.id} className="border border-gray-200 hover:shadow-md transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-3 mb-3">
+                        <Avatar className="w-12 h-12">
+                          <AvatarImage src="" />
+                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white">
+                            {member.name.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2">
+                            <h4 className="font-semibold text-gray-900">{member.name}</h4>
+                            {isConnected(member.id) && (
+                              <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800">
+                                Friend
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-600">{member.designation}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2 text-sm text-gray-600">
+                        <div className="flex items-center">
+                          <MapPin className="w-4 h-4 mr-2" />
+                          <span>{member.homeDistrict}, {member.homeState}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <User className="w-4 h-4 mr-2" />
+                          <span>{member.currentDistrict}, {member.currentState}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-between items-center mt-4">
+                        {isConnected(member.id) && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleContact(member)}
+                            className="text-xs"
+                          >
+                            Contact
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant={isConnected(member.id) ? "destructive" : "default"}
+                          onClick={() => handleToggleConnection(member)}
+                          className="text-xs ml-auto"
+                        >
+                          {isConnected(member.id) ? (
+                            <>
+                              <UserMinus className="w-4 h-4 mr-1" />
+                              Remove
+                            </>
+                          ) : (
+                            <>
+                              <UserPlus className="w-4 h-4 mr-1" />
+                              Connect
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* My Connections Section */}
+        {connections.length > 0 && (
+          <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Users className="w-5 h-5" />
+                <span>My Connections</span>
+                <Badge variant="outline" className="ml-2">{connections.length}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {connections.map((connection) => (
                   <Card key={connection.id} className="border border-gray-200 hover:shadow-md transition-shadow">
@@ -177,95 +492,9 @@ const Connections = ({
                   </Card>
                 ))}
               </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Add Connection Section */}
-        <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Plus className="w-5 h-5" />
-              <span>Add New Connection</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleAddConnection} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
-                  <Input
-                    value={newConnection.name}
-                    onChange={(e) => setNewConnection(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="Enter name"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Designation</label>
-                  <Select value={newConnection.designation} onValueChange={(value) => setNewConnection(prev => ({ ...prev, designation: value as any }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select designation" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Student">Student</SelectItem>
-                      <SelectItem value="Working Professional">Working Professional</SelectItem>
-                      <SelectItem value="Business">Business</SelectItem>
-                      <SelectItem value="Freelancer">Freelancer</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Home State</label>
-                  <Input
-                    value={newConnection.homeState}
-                    onChange={(e) => setNewConnection(prev => ({ ...prev, homeState: e.target.value }))}
-                    placeholder="Enter home state"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Home District</label>
-                  <Input
-                    value={newConnection.homeDistrict}
-                    onChange={(e) => setNewConnection(prev => ({ ...prev, homeDistrict: e.target.value }))}
-                    placeholder="Enter home district"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Current State</label>
-                  <Input
-                    value={newConnection.currentState}
-                    onChange={(e) => setNewConnection(prev => ({ ...prev, currentState: e.target.value }))}
-                    placeholder="Enter current state"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Current District</label>
-                  <Input
-                    value={newConnection.currentDistrict}
-                    onChange={(e) => setNewConnection(prev => ({ ...prev, currentDistrict: e.target.value }))}
-                    placeholder="Enter current district"
-                  />
-                </div>
-              </div>
-
-              <Button type="submit" className="w-full bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Connection
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Contact Dialog */}
