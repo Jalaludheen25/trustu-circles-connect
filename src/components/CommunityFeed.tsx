@@ -59,12 +59,15 @@ const CommunityFeed = ({
   
   const [proxyFilters, setProxyFilters] = useState({
     serviceType: '',
-    chargeRange: ''
+    chargeRange: '',
+    location: ''
   });
   
   const [productFilters, setProductFilters] = useState({
     itemType: '',
-    priceRange: ''
+    priceRange: '',
+    location: '',
+    itemDetails: ''
   });
 
   const currentCommunityName = isVisiting && visitingCommunityName ? visitingCommunityName : 
@@ -137,6 +140,8 @@ const CommunityFeed = ({
           listing.details?.proxyType !== proxyFilters.serviceType) return false;
       if (proxyFilters.chargeRange && 
           !isInChargeRange(listing.details?.charge, proxyFilters.chargeRange)) return false;
+      if (proxyFilters.location && 
+          !listing.location.toLowerCase().includes(proxyFilters.location.toLowerCase())) return false;
     }
     
     if (listing.type === 'product') {
@@ -144,6 +149,10 @@ const CommunityFeed = ({
           listing.details?.itemType !== productFilters.itemType) return false;
       if (productFilters.priceRange && 
           !isInPriceRange(listing.price, productFilters.priceRange)) return false;
+      if (productFilters.location && 
+          !listing.location.toLowerCase().includes(productFilters.location.toLowerCase())) return false;
+      if (productFilters.itemDetails && 
+          !listing.description.toLowerCase().includes(productFilters.itemDetails.toLowerCase())) return false;
     }
     
     return true;
@@ -185,11 +194,14 @@ const CommunityFeed = ({
     });
     setProxyFilters({
       serviceType: '',
-      chargeRange: ''
+      chargeRange: '',
+      location: ''
     });
     setProductFilters({
       itemType: '',
-      priceRange: ''
+      priceRange: '',
+      location: '',
+      itemDetails: ''
     });
   };
 
@@ -357,7 +369,7 @@ const CommunityFeed = ({
               Clear
             </Button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Select value={proxyFilters.serviceType} onValueChange={(value) => setProxyFilters(prev => ({...prev, serviceType: value}))}>
               <SelectTrigger>
                 <SelectValue placeholder="Service Type" />
@@ -383,6 +395,14 @@ const CommunityFeed = ({
                 <SelectItem value="1000+">₹1000 and above</SelectItem>
               </SelectContent>
             </Select>
+            
+            <input
+              type="text"
+              placeholder="Location"
+              value={proxyFilters.location}
+              onChange={(e) => setProxyFilters(prev => ({...prev, location: e.target.value}))}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
         </div>
       );
@@ -398,7 +418,7 @@ const CommunityFeed = ({
               Clear
             </Button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Select value={productFilters.itemType} onValueChange={(value) => setProductFilters(prev => ({...prev, itemType: value}))}>
               <SelectTrigger>
                 <SelectValue placeholder="Item Type" />
@@ -424,6 +444,22 @@ const CommunityFeed = ({
                 <SelectItem value="5000+">₹5000 and above</SelectItem>
               </SelectContent>
             </Select>
+            
+            <input
+              type="text"
+              placeholder="Location"
+              value={productFilters.location}
+              onChange={(e) => setProductFilters(prev => ({...prev, location: e.target.value}))}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            
+            <input
+              type="text"
+              placeholder="Item Details"
+              value={productFilters.itemDetails}
+              onChange={(e) => setProductFilters(prev => ({...prev, itemDetails: e.target.value}))}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
         </div>
       );
