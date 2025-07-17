@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,13 +24,14 @@ interface ProfileCreationProps {
   user: User | null;
   isEditing?: boolean;
   onUpdateUser?: (user: User) => void;
+  onBack?: () => void;
 }
 
-const ProfileCreation = ({ onComplete, user, isEditing = false, onUpdateUser }: ProfileCreationProps) => {
+const ProfileCreation = ({ onComplete, user, isEditing = false, onUpdateUser, onBack }: ProfileCreationProps) => {
   const [formData, setFormData] = useState({
     name: user?.name || '',
-    gender: user?.gender || '',
-    designation: user?.designation || '',
+    gender: user?.gender || '' as 'Male' | 'Female' | '',
+    designation: user?.designation || '' as 'Student' | 'Working Professional' | 'Business' | 'Freelancer' | 'Other' | '',
     isProfileLocked: user?.isProfileLocked || false,
     institute: user?.institute || '',
     company: user?.company || '',
@@ -50,10 +52,29 @@ const ProfileCreation = ({ onComplete, user, isEditing = false, onUpdateUser }: 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onComplete(formData);
-    if (onUpdateUser && user) {
-      const updatedUser = { ...user, ...formData };
-      onUpdateUser(updatedUser);
+    if (formData.gender && formData.designation) {
+      onComplete({
+        ...formData,
+        gender: formData.gender as 'Male' | 'Female',
+        designation: formData.designation as 'Student' | 'Working Professional' | 'Business' | 'Freelancer' | 'Other'
+      });
+      if (onUpdateUser && user) {
+        const updatedUser = { 
+          ...user, 
+          ...formData,
+          gender: formData.gender as 'Male' | 'Female',
+          designation: formData.designation as 'Student' | 'Working Professional' | 'Business' | 'Freelancer' | 'Other'
+        };
+        onUpdateUser(updatedUser);
+      }
+    }
+  };
+
+  const handleBackClick = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      window.history.back();
     }
   };
 
@@ -66,7 +87,7 @@ const ProfileCreation = ({ onComplete, user, isEditing = false, onUpdateUser }: 
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => window.history.back()}
+                onClick={handleBackClick}
                 className="border-gray-200 hover:border-rose-300"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />

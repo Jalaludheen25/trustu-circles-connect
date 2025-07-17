@@ -273,6 +273,7 @@ const Index = () => {
             user={user}
             isEditing={!!user && currentStep === 'profile'}
             onUpdateUser={setUser}
+            onBack={() => setCurrentStep('feed')}
           />
         );
       case 'join-community':
