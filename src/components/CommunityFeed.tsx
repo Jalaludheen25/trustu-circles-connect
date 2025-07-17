@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,8 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Users, User, Settings, Heart, MapPin, Calendar, Star, Filter, Search, Home, Briefcase } from 'lucide-react';
+import { Plus, Users, User, Settings, Heart, MapPin, Calendar, Star, Filter, Search, Home, Briefcase, X } from 'lucide-react';
 import { User as UserType, Community, Listing } from '@/pages/Index';
 import CommunityFilter from './CommunityFilter';
 
@@ -47,6 +47,25 @@ const CommunityFeed = ({
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [showListingDetails, setShowListingDetails] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
+  
+  // Filter states
+  const [accommodationFilters, setAccommodationFilters] = useState({
+    accommodationType: '',
+    availableFor: '',
+    maxOccupancy: '',
+    rentPerDay: '',
+    rentPerMonth: ''
+  });
+  
+  const [proxyFilters, setProxyFilters] = useState({
+    serviceType: '',
+    chargeRange: ''
+  });
+  
+  const [productFilters, setProductFilters] = useState({
+    itemType: '',
+    priceRange: ''
+  });
 
   const currentCommunityName = isVisiting && visitingCommunityName ? visitingCommunityName : 
     (appliedFilter || community.name);
@@ -94,12 +113,85 @@ const CommunityFeed = ({
         listing.user.currentDistrict === user.currentDistrict;
     }
 
-    // Then apply tab filter
     if (!communityFiltered) return false;
     
-    if (activeTab === 'all') return true;
-    return listing.type === activeTab;
+    // Apply tab filter
+    if (activeTab !== 'all' && listing.type !== activeTab) return false;
+    
+    // Apply specific filters based on listing type
+    if (listing.type === 'accommodation') {
+      if (accommodationFilters.accommodationType && 
+          listing.details?.accommodationType !== accommodationFilters.accommodationType) return false;
+      if (accommodationFilters.availableFor && 
+          !listing.details?.availableFor?.includes(accommodationFilters.availableFor)) return false;
+      if (accommodationFilters.maxOccupancy && 
+          listing.details?.maxOccupancy !== accommodationFilters.maxOccupancy) return false;
+      if (accommodationFilters.rentPerDay && 
+          listing.details?.rentPerDay !== accommodationFilters.rentPerDay) return false;
+      if (accommodationFilters.rentPerMonth && 
+          listing.details?.rentPerMonth !== accommodationFilters.rentPerMonth) return false;
+    }
+    
+    if (listing.type === 'proxy') {
+      if (proxyFilters.serviceType && 
+          listing.details?.proxyType !== proxyFilters.serviceType) return false;
+      if (proxyFilters.chargeRange && 
+          !isInChargeRange(listing.details?.charge, proxyFilters.chargeRange)) return false;
+    }
+    
+    if (listing.type === 'product') {
+      if (productFilters.itemType && 
+          listing.details?.itemType !== productFilters.itemType) return false;
+      if (productFilters.priceRange && 
+          !isInPriceRange(listing.price, productFilters.priceRange)) return false;
+    }
+    
+    return true;
   });
+
+  const isInChargeRange = (charge: string, range: string) => {
+    if (!charge || !range) return true;
+    const chargeNum = parseInt(charge);
+    switch (range) {
+      case '100-200': return chargeNum >= 100 && chargeNum <= 200;
+      case '200-500': return chargeNum >= 200 && chargeNum <= 500;
+      case '500-700': return chargeNum >= 500 && chargeNum <= 700;
+      case '700-1000': return chargeNum >= 700 && chargeNum <= 1000;
+      case '1000+': return chargeNum >= 1000;
+      default: return true;
+    }
+  };
+
+  const isInPriceRange = (price: string, range: string) => {
+    if (!price || !range) return true;
+    const priceNum = parseInt(price);
+    switch (range) {
+      case '100-500': return priceNum >= 100 && priceNum <= 500;
+      case '500-1000': return priceNum >= 500 && priceNum <= 1000;
+      case '1000-2000': return priceNum >= 1000 && priceNum <= 2000;
+      case '2000-5000': return priceNum >= 2000 && priceNum <= 5000;
+      case '5000+': return priceNum >= 5000;
+      default: return true;
+    }
+  };
+
+  const clearFilters = () => {
+    setAccommodationFilters({
+      accommodationType: '',
+      availableFor: '',
+      maxOccupancy: '',
+      rentPerDay: '',
+      rentPerMonth: ''
+    });
+    setProxyFilters({
+      serviceType: '',
+      chargeRange: ''
+    });
+    setProductFilters({
+      itemType: '',
+      priceRange: ''
+    });
+  };
 
   const handleListingClick = (listing: Listing) => {
     setSelectedListing(listing);
@@ -176,6 +268,169 @@ const CommunityFeed = ({
   };
 
   const tabCounts = getTabCounts();
+
+  const renderFilters = () => {
+    if (activeTab === 'accommodation') {
+      return (
+        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 mb-6 border border-gray-200">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-gray-900">Filter Accommodations</h3>
+            <Button variant="outline" size="sm" onClick={clearFilters}>
+              <X className="w-4 h-4 mr-2" />
+              Clear
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <Select value={accommodationFilters.accommodationType} onValueChange={(value) => setAccommodationFilters(prev => ({...prev, accommodationType: value}))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Accommodation Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Flat (Permanent Stay)">Flat (Permanent Stay)</SelectItem>
+                <SelectItem value="Flat (Temporary Stay)">Flat (Temporary Stay)</SelectItem>
+                <SelectItem value="Hostel">Hostel</SelectItem>
+                <SelectItem value="PG">PG</SelectItem>
+                <SelectItem value="Hotel">Hotel</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={accommodationFilters.availableFor} onValueChange={(value) => setAccommodationFilters(prev => ({...prev, availableFor: value}))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Available For" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Male Bachelors">Male Bachelors</SelectItem>
+                <SelectItem value="Female Bachelors">Female Bachelors</SelectItem>
+                <SelectItem value="Families">Families</SelectItem>
+                <SelectItem value="Anyone">Anyone</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={accommodationFilters.maxOccupancy} onValueChange={(value) => setAccommodationFilters(prev => ({...prev, maxOccupancy: value}))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Max Occupancy" />
+              </SelectTrigger>
+              <SelectContent>
+                {[1,2,3,4,5,6,7,8,9,10].map(num => (
+                  <SelectItem key={num} value={num.toString()}>{num}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            <Select value={accommodationFilters.rentPerDay} onValueChange={(value) => setAccommodationFilters(prev => ({...prev, rentPerDay: value}))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Rent Per Day" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="100-200">₹100-200</SelectItem>
+                <SelectItem value="200-400">₹200-400</SelectItem>
+                <SelectItem value="400-600">₹400-600</SelectItem>
+                <SelectItem value="600-800">₹600-800</SelectItem>
+                <SelectItem value="800-1000">₹800-1000</SelectItem>
+                <SelectItem value="1000+">₹1000 and above</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={accommodationFilters.rentPerMonth} onValueChange={(value) => setAccommodationFilters(prev => ({...prev, rentPerMonth: value}))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Rent Per Month" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1500-2500">₹1500-2500</SelectItem>
+                <SelectItem value="2500-3500">₹2500-3500</SelectItem>
+                <SelectItem value="3500-4500">₹3500-4500</SelectItem>
+                <SelectItem value="4500+">₹4500 and above</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      );
+    }
+
+    if (activeTab === 'proxy') {
+      return (
+        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 mb-6 border border-gray-200">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-gray-900">Filter Proxy Services</h3>
+            <Button variant="outline" size="sm" onClick={clearFilters}>
+              <X className="w-4 h-4 mr-2" />
+              Clear
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Select value={proxyFilters.serviceType} onValueChange={(value) => setProxyFilters(prev => ({...prev, serviceType: value}))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Service Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Tourist Guide">Tourist Guide</SelectItem>
+                <SelectItem value="Proxy Work (Jamia)">Proxy Work (Jamia)</SelectItem>
+                <SelectItem value="Proxy Work (DU)">Proxy Work (DU)</SelectItem>
+                <SelectItem value="Proxy Work (Anywhere in Delhi)">Proxy Work (Anywhere in Delhi)</SelectItem>
+                <SelectItem value="Room Search Assistance">Room Search Assistance</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={proxyFilters.chargeRange} onValueChange={(value) => setProxyFilters(prev => ({...prev, chargeRange: value}))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Charge Range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="100-200">₹100-200</SelectItem>
+                <SelectItem value="200-500">₹200-500</SelectItem>
+                <SelectItem value="500-700">₹500-700</SelectItem>
+                <SelectItem value="700-1000">₹700-1000</SelectItem>
+                <SelectItem value="1000+">₹1000 and above</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      );
+    }
+
+    if (activeTab === 'product') {
+      return (
+        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 mb-6 border border-gray-200">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-gray-900">Filter Products</h3>
+            <Button variant="outline" size="sm" onClick={clearFilters}>
+              <X className="w-4 h-4 mr-2" />
+              Clear
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Select value={productFilters.itemType} onValueChange={(value) => setProductFilters(prev => ({...prev, itemType: value}))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Item Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Educational Items">Educational Items</SelectItem>
+                <SelectItem value="Electronics and Gadgets">Electronics and Gadgets</SelectItem>
+                <SelectItem value="Home & Kitchen Items">Home & Kitchen Items</SelectItem>
+                <SelectItem value="Vehicle">Vehicle</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={productFilters.priceRange} onValueChange={(value) => setProductFilters(prev => ({...prev, priceRange: value}))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Price Range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="100-500">₹100-500</SelectItem>
+                <SelectItem value="500-1000">₹500-1000</SelectItem>
+                <SelectItem value="1000-2000">₹1000-2000</SelectItem>
+                <SelectItem value="2000-5000">₹2000-5000</SelectItem>
+                <SelectItem value="5000+">₹5000 and above</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-white to-blue-50">
@@ -261,15 +516,35 @@ const CommunityFeed = ({
                 </div>
               </div>
               
-              {(isVisiting || appliedFilter) && (
-                <Button
-                  onClick={onBackToMyCommunity}
-                  variant="outline"
-                  className="border-rose-200 text-rose-700 hover:bg-rose-50"
-                >
-                  Back to My Community
-                </Button>
-              )}
+              <div className="flex flex-col space-y-2">
+                {(isVisiting || appliedFilter) && (
+                  <Button
+                    onClick={onBackToMyCommunity}
+                    variant="outline"
+                    className="border-rose-200 text-rose-700 hover:bg-rose-50"
+                  >
+                    Back to My Community
+                  </Button>
+                )}
+                <div className="flex space-x-2">
+                  <Button
+                    onClick={() => onNavigate('add-service')}
+                    size="sm"
+                    className="bg-blue-500 hover:bg-blue-600"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Service
+                  </Button>
+                  <Button
+                    onClick={() => onNavigate('sell-product')}
+                    size="sm"
+                    className="bg-green-500 hover:bg-green-600"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Sell Product
+                  </Button>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -282,48 +557,30 @@ const CommunityFeed = ({
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <div className="flex items-center justify-between mb-6">
-              <TabsList className="grid grid-cols-4 w-full max-w-lg">
-                <TabsTrigger value="all" className="flex items-center space-x-2">
-                  <span>All</span>
-                  <Badge variant="secondary" className="ml-1">{tabCounts.all}</Badge>
-                </TabsTrigger>
-                <TabsTrigger value="accommodation" className="flex items-center space-x-2">
-                  <Home className="w-4 h-4" />
-                  <span>Accommodation</span>
-                  <Badge variant="secondary" className="ml-1">{tabCounts.accommodation}</Badge>
-                </TabsTrigger>
-                <TabsTrigger value="proxy" className="flex items-center space-x-2">
-                  <User className="w-4 h-4" />
-                  <span>Proxy</span>
-                  <Badge variant="secondary" className="ml-1">{tabCounts.proxy}</Badge>
-                </TabsTrigger>
-                <TabsTrigger value="product" className="flex items-center space-x-2">
-                  <Briefcase className="w-4 h-4" />
-                  <span>Buy & Sell</span>
-                  <Badge variant="secondary" className="ml-1">{tabCounts.product}</Badge>
-                </TabsTrigger>
-              </TabsList>
+            <TabsList className="grid grid-cols-4 w-full max-w-lg mb-6">
+              <TabsTrigger value="all" className="flex items-center space-x-2">
+                <span>All</span>
+                <Badge variant="secondary" className="ml-1">{tabCounts.all}</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="accommodation" className="flex items-center space-x-2">
+                <Home className="w-4 h-4" />
+                <span>Accommodation</span>
+                <Badge variant="secondary" className="ml-1">{tabCounts.accommodation}</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="proxy" className="flex items-center space-x-2">
+                <User className="w-4 h-4" />
+                <span>Proxy</span>
+                <Badge variant="secondary" className="ml-1">{tabCounts.proxy}</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="product" className="flex items-center space-x-2">
+                <Briefcase className="w-4 h-4" />
+                <span>Buy & Sell</span>
+                <Badge variant="secondary" className="ml-1">{tabCounts.product}</Badge>
+              </TabsTrigger>
+            </TabsList>
 
-              <div className="flex space-x-2">
-                <Button
-                  onClick={() => onNavigate('add-service')}
-                  size="sm"
-                  className="bg-blue-500 hover:bg-blue-600"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Service
-                </Button>
-                <Button
-                  onClick={() => onNavigate('sell-product')}
-                  size="sm"
-                  className="bg-green-500 hover:bg-green-600"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Sell Product
-                </Button>
-              </div>
-            </div>
+            {/* Render filters based on active tab */}
+            {renderFilters()}
 
             <TabsContent value={activeTab}>
               {filteredListings.length === 0 ? (
