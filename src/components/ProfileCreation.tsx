@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { User, ArrowLeft } from 'lucide-react';
+import { User as UserIcon, ArrowLeft } from 'lucide-react';
+import { User } from '@/pages/Index';
 
 interface ProfileCreationProps {
   onComplete: (profileData: {
@@ -74,7 +75,7 @@ const ProfileCreation = ({ onComplete, user, isEditing = false, onUpdateUser }: 
             </div>
           )}
           <div className="w-20 h-20 bg-gradient-to-br from-rose-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
-            <User className="w-10 h-10 text-white" />
+            <UserIcon className="w-10 h-10 text-white" />
           </div>
           <CardTitle className="text-2xl font-bold text-gray-900">
             {isEditing ? 'Edit Profile' : 'Complete Your Profile'}
