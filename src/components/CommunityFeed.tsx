@@ -618,7 +618,7 @@ const CommunityFeed = ({
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-4 w-full max-w-2xl mb-4 h-12">
+            <TabsList className="grid grid-cols-4 w-full mb-4 h-12">
               <TabsTrigger value="all" className="flex items-center space-x-2 text-sm font-medium">
                 <span>All Listings</span>
                 <Badge variant="secondary" className="ml-1">{tabCounts.all}</Badge>
