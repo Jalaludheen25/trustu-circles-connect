@@ -300,7 +300,20 @@ const Index = () => {
     }
     
     if (savedListings) {
-      setListings(JSON.parse(savedListings));
+      const existingListings = JSON.parse(savedListings);
+      const sampleListings = generateSampleListings();
+      
+      // Check if sample listings are already added (by checking for a specific sample ID)
+      const hasSampleListings = existingListings.some((listing: Listing) => listing.id === 'listing1');
+      
+      if (!hasSampleListings) {
+        // Add sample listings to existing ones
+        const combinedListings = [...existingListings, ...sampleListings];
+        setListings(combinedListings);
+        localStorage.setItem('trustu_listings', JSON.stringify(combinedListings));
+      } else {
+        setListings(existingListings);
+      }
     } else {
       // Add sample Kerala listings
       const sampleListings = generateSampleListings();
@@ -308,7 +321,20 @@ const Index = () => {
     }
     
     if (savedConnections) {
-      setConnections(JSON.parse(savedConnections));
+      const existingConnections = JSON.parse(savedConnections);
+      const sampleConnections = generateSampleConnections();
+      
+      // Check if sample connections are already added
+      const hasSampleConnections = existingConnections.some((conn: User) => conn.id === 'conn1');
+      
+      if (!hasSampleConnections) {
+        // Add sample connections to existing ones
+        const combinedConnections = [...existingConnections, ...sampleConnections];
+        setConnections(combinedConnections);
+        localStorage.setItem('trustu_connections', JSON.stringify(combinedConnections));
+      } else {
+        setConnections(existingConnections);
+      }
     } else {
       // Add sample connections
       const sampleConnections = generateSampleConnections();
