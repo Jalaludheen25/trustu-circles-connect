@@ -74,6 +74,10 @@ const CommunityFeed = ({
     (appliedFilter || community.name);
 
   const filteredListings = listings.filter(listing => {
+    console.log('Filtering listing:', listing.title, 'by user:', listing.user.name);
+    console.log('User home state:', listing.user.homeState, 'User current state:', listing.user.currentState);
+    console.log('Current user home state:', user.homeState, 'Current user current state:', user.currentState);
+    
     // First apply community filter
     let communityFiltered = true;
     
@@ -110,10 +114,9 @@ const CommunityFeed = ({
         communityFiltered = listing.user.homeState === visitingCommunityName && listing.user.currentState === visitingCommunityName;
       }
     } else {
+      // Modified to show users from same home state and current state (not requiring exact districts)
       communityFiltered = listing.user.homeState === user.homeState && 
-        listing.user.homeDistrict === user.homeDistrict &&
-        listing.user.currentState === user.currentState && 
-        listing.user.currentDistrict === user.currentDistrict;
+        listing.user.currentState === user.currentState;
     }
 
     if (!communityFiltered) return false;

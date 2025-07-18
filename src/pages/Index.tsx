@@ -303,12 +303,18 @@ const Index = () => {
       const existingListings = JSON.parse(savedListings);
       const sampleListings = generateSampleListings();
       
+      console.log('Existing listings:', existingListings);
+      console.log('Sample listings:', sampleListings);
+      
       // Check if sample listings are already added (by checking for a specific sample ID)
       const hasSampleListings = existingListings.some((listing: Listing) => listing.id === 'listing1');
+      
+      console.log('Has sample listings:', hasSampleListings);
       
       if (!hasSampleListings) {
         // Add sample listings to existing ones
         const combinedListings = [...existingListings, ...sampleListings];
+        console.log('Combined listings:', combinedListings);
         setListings(combinedListings);
         localStorage.setItem('trustu_listings', JSON.stringify(combinedListings));
       } else {
@@ -317,6 +323,7 @@ const Index = () => {
     } else {
       // Add sample Kerala listings
       const sampleListings = generateSampleListings();
+      console.log('Setting sample listings:', sampleListings);
       setListings(sampleListings);
     }
     
