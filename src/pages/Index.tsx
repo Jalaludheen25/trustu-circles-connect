@@ -46,6 +46,224 @@ export type Listing = {
   createdAt: Date;
 };
 
+const generateSampleConnections = (): User[] => {
+  return [
+    {
+      id: 'conn1',
+      name: 'Arjun Nair',
+      gender: 'Male',
+      designation: 'Working Professional',
+      homeState: 'Kerala',
+      homeDistrict: 'Kottayam',
+      currentState: 'Delhi',
+      currentDistrict: 'Dwarka',
+      phone: '+91 9876543210',
+      email: 'arjun.nair@example.com'
+    },
+    {
+      id: 'conn2',
+      name: 'Priya Menon',
+      gender: 'Female',
+      designation: 'Student',
+      homeState: 'Kerala',
+      homeDistrict: 'Thrissur',
+      currentState: 'Delhi',
+      currentDistrict: 'South Delhi',
+      phone: '+91 9876543211',
+      email: 'priya.menon@example.com'
+    }
+  ];
+};
+
+const generateSampleListings = (): Listing[] => {
+  const sampleUsers: User[] = [
+    {
+      id: 'user1',
+      name: 'Rahul Krishna',
+      gender: 'Male',
+      designation: 'Student',
+      homeState: 'Kerala',
+      homeDistrict: 'Thiruvananthapuram',
+      currentState: 'Delhi',
+      currentDistrict: 'South Delhi',
+      phone: '+91 9876543212',
+      email: 'rahul.krishna@example.com'
+    },
+    {
+      id: 'user2',
+      name: 'Sneha Pillai',
+      gender: 'Female',
+      designation: 'Working Professional',
+      homeState: 'Kerala',
+      homeDistrict: 'Ernakulam',
+      currentState: 'Delhi',
+      currentDistrict: 'Dwarka',
+      phone: '+91 9876543213',
+      email: 'sneha.pillai@example.com'
+    },
+    {
+      id: 'user3',
+      name: 'Arun Varma',
+      gender: 'Male',
+      designation: 'Working Professional',
+      homeState: 'Kerala',
+      homeDistrict: 'Malappuram',
+      currentState: 'Delhi',
+      currentDistrict: 'Gurgaon',
+      phone: '+91 9876543214',
+      email: 'arun.varma@example.com'
+    },
+    {
+      id: 'user4',
+      name: 'Anjali George',
+      gender: 'Female',
+      designation: 'Student',
+      homeState: 'Kerala',
+      homeDistrict: 'Kozhikode',
+      currentState: 'Delhi',
+      currentDistrict: 'North Delhi',
+      phone: '+91 9876543215',
+      email: 'anjali.george@example.com'
+    },
+    {
+      id: 'user5',
+      name: 'Vishnu Nair',
+      gender: 'Male',
+      designation: 'Business',
+      homeState: 'Kerala',
+      homeDistrict: 'Kollam',
+      currentState: 'Delhi',
+      currentDistrict: 'Central Delhi',
+      phone: '+91 9876543216',
+      email: 'vishnu.nair@example.com'
+    },
+    {
+      id: 'user6',
+      name: 'Maya Thomas',
+      gender: 'Female',
+      designation: 'Working Professional',
+      homeState: 'Kerala',
+      homeDistrict: 'Palakkad',
+      currentState: 'Delhi',
+      currentDistrict: 'East Delhi',
+      phone: '+91 9876543217',
+      email: 'maya.thomas@example.com'
+    }
+  ];
+
+  return [
+    // Accommodation listings
+    {
+      id: 'listing1',
+      userId: 'user1',
+      user: sampleUsers[0],
+      type: 'accommodation',
+      title: '2BHK Flat for Sharing in Dwarka',
+      description: 'Looking for a flatmate to share a spacious 2BHK in Dwarka Sector 12. Fully furnished with all amenities.',
+      location: 'Dwarka Sector 12, Delhi',
+      contact: '+91 9876543212',
+      price: '₹8000/month',
+      details: {
+        accommodationType: 'Flat (Permanent Stay)',
+        availableFor: ['Male Bachelors'],
+        maxOccupancy: '2',
+        rentPerDay: '',
+        rentPerMonth: '8000'
+      },
+      createdAt: new Date('2024-01-15')
+    },
+    {
+      id: 'listing2',
+      userId: 'user2',
+      user: sampleUsers[1],
+      type: 'accommodation',
+      title: 'PG for Female Students near DU',
+      description: 'Safe and secure PG accommodation for female students near Delhi University. Home-cooked meals included.',
+      location: 'Kamla Nagar, Delhi',
+      contact: '+91 9876543213',
+      price: '₹6500/month',
+      details: {
+        accommodationType: 'PG',
+        availableFor: ['Female Bachelors'],
+        maxOccupancy: '3',
+        rentPerDay: '',
+        rentPerMonth: '6500'
+      },
+      createdAt: new Date('2024-01-10')
+    },
+    // Proxy listings
+    {
+      id: 'listing3',
+      userId: 'user3',
+      user: sampleUsers[2],
+      type: 'proxy',
+      title: 'Tourist Guide Services in Delhi',
+      description: 'Experienced guide for Kerala families visiting Delhi. Can help with sightseeing, local transportation, and Malayalam interpretation.',
+      location: 'All over Delhi',
+      contact: '+91 9876543214',
+      price: '',
+      details: {
+        proxyType: 'Tourist Guide',
+        charge: '500',
+        serviceDescription: 'Tour guide with Malayalam language support'
+      },
+      createdAt: new Date('2024-01-12')
+    },
+    {
+      id: 'listing4',
+      userId: 'user4',
+      user: sampleUsers[3],
+      type: 'proxy',
+      title: 'Room Search Assistance',
+      description: 'Help finding suitable accommodation for new Keralites in Delhi. Know all the best areas and have good connections with landlords.',
+      location: 'Delhi NCR',
+      contact: '+91 9876543215',
+      price: '',
+      details: {
+        proxyType: 'Room Search Assistance',
+        charge: '300',
+        serviceDescription: 'Professional room finding service'
+      },
+      createdAt: new Date('2024-01-08')
+    },
+    // Product listings
+    {
+      id: 'listing5',
+      userId: 'user5',
+      user: sampleUsers[4],
+      type: 'product',
+      title: 'Engineering Textbooks for Sale',
+      description: 'Selling computer science engineering books in excellent condition. Perfect for CSE students.',
+      location: 'Lajpat Nagar, Delhi',
+      contact: '+91 9876543216',
+      price: '₹2500',
+      details: {
+        itemType: 'Educational Items',
+        condition: 'Good',
+        description: 'Complete set of CSE textbooks'
+      },
+      createdAt: new Date('2024-01-14')
+    },
+    {
+      id: 'listing6',
+      userId: 'user6',
+      user: sampleUsers[5],
+      type: 'product',
+      title: 'Laptop for Sale - Dell Inspiron',
+      description: 'Selling my Dell Inspiron laptop, 8GB RAM, 512GB SSD, excellent for students and professionals.',
+      location: 'Karol Bagh, Delhi',
+      contact: '+91 9876543217',
+      price: '₹35000',
+      details: {
+        itemType: 'Electronics and Gadgets',
+        condition: 'Excellent',
+        description: 'Dell Inspiron with warranty'
+      },
+      createdAt: new Date('2024-01-11')
+    }
+  ];
+};
+
 const Index = () => {
   const [currentStep, setCurrentStep] = useState('landing');
   const [user, setUser] = useState<User | null>(null);
@@ -83,10 +301,18 @@ const Index = () => {
     
     if (savedListings) {
       setListings(JSON.parse(savedListings));
+    } else {
+      // Add sample Kerala listings
+      const sampleListings = generateSampleListings();
+      setListings(sampleListings);
     }
     
     if (savedConnections) {
       setConnections(JSON.parse(savedConnections));
+    } else {
+      // Add sample connections
+      const sampleConnections = generateSampleConnections();
+      setConnections(sampleConnections);
     }
   }, []);
 

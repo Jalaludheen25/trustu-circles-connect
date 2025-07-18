@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Users, User, Settings, Heart, MapPin, Calendar, Star, Filter, Search, Home, Briefcase, X } from 'lucide-react';
+import { Plus, Users, User, Settings, Heart, MapPin, Calendar, Star, Filter, Search, Home, Briefcase, X, UserCheck, UserX } from 'lucide-react';
 import { User as UserType, Community, Listing } from '@/pages/Index';
 import CommunityFilter from './CommunityFilter';
 
@@ -226,6 +226,25 @@ const CommunityFeed = ({
       case 'product': return 'bg-purple-50 text-purple-700 border-purple-200';
       default: return 'bg-gray-50 text-gray-700 border-gray-200';
     }
+  };
+
+  const isConnectedTo = (userId: string) => {
+    return connections.some(conn => conn.id === userId);
+  };
+
+  const getMutualFriends = (userId: string) => {
+    // For demo purposes, we'll simulate mutual friends based on some criteria
+    // In a real app, this would come from your backend
+    const mutualFriendsData: { [key: string]: string[] } = {
+      'user1': ['Arjun Nair', 'Priya Menon'],
+      'user2': ['Arjun Nair'],
+      'user3': [],
+      'user4': ['Priya Menon'],
+      'user5': ['Arjun Nair', 'Priya Menon'],
+      'user6': []
+    };
+    
+    return mutualFriendsData[userId] || [];
   };
 
   const getTabCounts = () => {
@@ -593,13 +612,13 @@ const CommunityFeed = ({
 
         {/* Listings Section with Tabs */}
         <div className="mb-6">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold text-gray-900">Community Listings</h2>
             <span className="text-gray-600">{filteredListings.length} listings available</span>
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-4 w-full max-w-2xl mb-6 h-12">
+            <TabsList className="grid grid-cols-4 w-full max-w-2xl mb-4 h-12">
               <TabsTrigger value="all" className="flex items-center space-x-2 text-sm font-medium">
                 <span>All Listings</span>
                 <Badge variant="secondary" className="ml-1">{tabCounts.all}</Badge>
@@ -695,6 +714,44 @@ const CommunityFeed = ({
                             <span className="font-semibold text-green-600">{listing.price}</span>
                           )}
                         </div>
+                        
+                        {/* Connection and Mutual Friends Info */}
+                        {listing.userId !== user.id && (
+                          <div className="mt-3 pt-3 border-t border-gray-100">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center space-x-2">
+                                {isConnectedTo(listing.userId) ? (
+                                  <div className="flex items-center text-green-600 text-xs">
+                                    <UserCheck className="w-3 h-3 mr-1" />
+                                    <span>Connected</span>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center text-gray-500 text-xs">
+                                    <UserX className="w-3 h-3 mr-1" />
+                                    <span>Not connected</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            
+                            {/* Mutual Friends */}
+                            <div className="text-xs text-gray-500">
+                              {(() => {
+                                const mutualFriends = getMutualFriends(listing.userId);
+                                if (mutualFriends.length > 0) {
+                                  return (
+                                    <span>
+                                      Mutual friends: {mutualFriends.slice(0, 2).join(', ')}
+                                      {mutualFriends.length > 2 && ` +${mutualFriends.length - 2} more`}
+                                    </span>
+                                  );
+                                } else {
+                                  return <span>No mutual friends</span>;
+                                }
+                              })()}
+                            </div>
+                          </div>
+                        )}
                         
                         <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
                           <div className="flex items-center text-xs text-gray-500">
