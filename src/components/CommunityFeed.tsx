@@ -579,24 +579,26 @@ const CommunityFeed = ({
                 </div>
               </div>
               
-              <div className="flex space-x-2">
-                <Button
-                  onClick={() => onNavigate('add-service')}
-                  size="sm"
-                  className="bg-blue-500 hover:bg-blue-600"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Service
-                </Button>
-                <Button
-                  onClick={() => onNavigate('sell-product')}
-                  size="sm"
-                  className="bg-green-500 hover:bg-green-600"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Sell Product
-                </Button>
-              </div>
+              {!isVisiting && (
+                <div className="flex space-x-2">
+                  <Button
+                    onClick={() => onNavigate('add-service')}
+                    size="sm"
+                    className="bg-blue-500 hover:bg-blue-600"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Service
+                  </Button>
+                  <Button
+                    onClick={() => onNavigate('sell-product')}
+                    size="sm"
+                    className="bg-green-500 hover:bg-green-600"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Sell Product
+                  </Button>
+                </div>
+              )}
             </div>
             
             {(isVisiting || appliedFilter) && (
@@ -660,20 +662,22 @@ const CommunityFeed = ({
                         : `No ${activeTab} listings available in your community.`
                       }
                     </p>
-                    <div className="flex justify-center space-x-4">
-                      <Button
-                        onClick={() => onNavigate('add-service')}
-                        className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
-                      >
-                        Add Service
-                      </Button>
-                      <Button
-                        onClick={() => onNavigate('sell-product')}
-                        className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
-                      >
-                        Sell Product
-                      </Button>
-                    </div>
+                     {!isVisiting && (
+                      <div className="flex justify-center space-x-4">
+                        <Button
+                          onClick={() => onNavigate('add-service')}
+                          className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
+                        >
+                          Add Service
+                        </Button>
+                        <Button
+                          onClick={() => onNavigate('sell-product')}
+                          className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+                        >
+                          Sell Product
+                        </Button>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               ) : (

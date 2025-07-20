@@ -264,6 +264,177 @@ const generateSampleListings = (): Listing[] => {
   ];
 };
 
+const generateCommunitySpecificListings = (homeState: string, currentState: string): Listing[] => {
+  // Tamil users in Delhi
+  if (homeState === 'Tamil Nadu' && currentState === 'Delhi') {
+    const tamilUsers: User[] = [
+      {
+        id: 'tamil1',
+        name: 'Karthik Raman',
+        gender: 'Male',
+        designation: 'Student',
+        homeState: 'Tamil Nadu',
+        homeDistrict: 'Chennai',
+        currentState: 'Delhi',
+        currentDistrict: 'South Delhi',
+        phone: '+91 9876543218',
+        email: 'karthik.raman@example.com'
+      },
+      {
+        id: 'tamil2',
+        name: 'Priya Shankar',
+        gender: 'Female',
+        designation: 'Working Professional',
+        homeState: 'Tamil Nadu',
+        homeDistrict: 'Coimbatore',
+        currentState: 'Delhi',
+        currentDistrict: 'Gurgaon',
+        phone: '+91 9876543219',
+        email: 'priya.shankar@example.com'
+      },
+      {
+        id: 'tamil3',
+        name: 'Rajesh Kumar',
+        gender: 'Male',
+        designation: 'Business',
+        homeState: 'Tamil Nadu',
+        homeDistrict: 'Madurai',
+        currentState: 'Delhi',
+        currentDistrict: 'Central Delhi',
+        phone: '+91 9876543220',
+        email: 'rajesh.kumar@example.com'
+      }
+    ];
+
+    return [
+      {
+        id: 'tamil_listing1',
+        userId: 'tamil1',
+        user: tamilUsers[0],
+        type: 'accommodation',
+        title: 'Shared Room for Tamil Students',
+        description: 'Looking for Tamil speaking flatmate. South Indian food available nearby.',
+        location: 'Lajpat Nagar, Delhi',
+        contact: '+91 9876543218',
+        price: '₹7000/month',
+        details: {
+          accommodationType: 'PG',
+          availableFor: ['Male Bachelors'],
+          maxOccupancy: '2',
+          rentPerDay: '',
+          rentPerMonth: '7000'
+        },
+        createdAt: new Date('2024-01-20')
+      },
+      {
+        id: 'tamil_listing2',
+        userId: 'tamil2',
+        user: tamilUsers[1],
+        type: 'proxy',
+        title: 'Tamil Translation Services',
+        description: 'Professional Tamil-Hindi translation for documents and legal work.',
+        location: 'All over Delhi',
+        contact: '+91 9876543219',
+        price: '',
+        details: {
+          proxyType: 'Tourist Guide',
+          charge: '400',
+          serviceDescription: 'Tamil language translation services'
+        },
+        createdAt: new Date('2024-01-18')
+      },
+      {
+        id: 'tamil_listing3',
+        userId: 'tamil3',
+        user: tamilUsers[2],
+        type: 'product',
+        title: 'Traditional Tamil Books',
+        description: 'Collection of classic Tamil literature and modern novels.',
+        location: 'Karol Bagh, Delhi',
+        contact: '+91 9876543220',
+        price: '₹1500',
+        details: {
+          itemType: 'Educational Items',
+          condition: 'Good',
+          description: 'Tamil literature collection'
+        },
+        createdAt: new Date('2024-01-16')
+      }
+    ];
+  }
+
+  // Local Delhi users
+  if (homeState === 'Delhi' && currentState === 'Delhi') {
+    const delhiUsers: User[] = [
+      {
+        id: 'delhi1',
+        name: 'Rohit Sharma',
+        gender: 'Male',
+        designation: 'Working Professional',
+        homeState: 'Delhi',
+        homeDistrict: 'Central Delhi',
+        currentState: 'Delhi',
+        currentDistrict: 'Central Delhi',
+        phone: '+91 9876543221',
+        email: 'rohit.sharma@example.com'
+      },
+      {
+        id: 'delhi2',
+        name: 'Anusha Singh',
+        gender: 'Female',
+        designation: 'Student',
+        homeState: 'Delhi',
+        homeDistrict: 'South Delhi',
+        currentState: 'Delhi',
+        currentDistrict: 'South Delhi',
+        phone: '+91 9876543222',
+        email: 'anusha.singh@example.com'
+      }
+    ];
+
+    return [
+      {
+        id: 'delhi_listing1',
+        userId: 'delhi1',
+        user: delhiUsers[0],
+        type: 'accommodation',
+        title: 'Premium Apartment in CP',
+        description: 'Luxury apartment in Connaught Place, perfect for professionals.',
+        location: 'Connaught Place, Delhi',
+        contact: '+91 9876543221',
+        price: '₹15000/month',
+        details: {
+          accommodationType: 'Flat (Permanent Stay)',
+          availableFor: ['Anyone'],
+          maxOccupancy: '1',
+          rentPerDay: '',
+          rentPerMonth: '15000'
+        },
+        createdAt: new Date('2024-01-22')
+      },
+      {
+        id: 'delhi_listing2',
+        userId: 'delhi2',
+        user: delhiUsers[1],
+        type: 'product',
+        title: 'Designer Clothes Sale',
+        description: 'Branded clothes in excellent condition. Perfect for college students.',
+        location: 'Khan Market, Delhi',
+        contact: '+91 9876543222',
+        price: '₹3000',
+        details: {
+          itemType: 'Clothing and Accessories',
+          condition: 'Excellent',
+          description: 'Designer clothing collection'
+        },
+        createdAt: new Date('2024-01-19')
+      }
+    ];
+  }
+
+  return [];
+};
+
 const Index = () => {
   const [currentStep, setCurrentStep] = useState('landing');
   const [user, setUser] = useState<User | null>(null);
@@ -312,8 +483,14 @@ const Index = () => {
       console.log('Has sample listings:', hasSampleListings);
       
       if (!hasSampleListings) {
-        // Add sample listings to existing ones
-        const combinedListings = [...existingListings, ...sampleListings];
+        // Add sample listings from different communities
+        const keralaSampleListings = generateSampleListings();
+        const tamilSampleListings = generateCommunitySpecificListings('Tamil Nadu', 'Delhi');
+        const delhiSampleListings = generateCommunitySpecificListings('Delhi', 'Delhi');
+        
+        const allSampleListings = [...keralaSampleListings, ...tamilSampleListings, ...delhiSampleListings];
+        const combinedListings = [...existingListings, ...allSampleListings];
+        
         console.log('Combined listings:', combinedListings);
         setListings(combinedListings);
         localStorage.setItem('trustu_listings', JSON.stringify(combinedListings));
@@ -321,10 +498,14 @@ const Index = () => {
         setListings(existingListings);
       }
     } else {
-      // Add sample Kerala listings
-      const sampleListings = generateSampleListings();
-      console.log('Setting sample listings:', sampleListings);
-      setListings(sampleListings);
+      // Add sample listings from different communities
+      const keralaSampleListings = generateSampleListings();
+      const tamilSampleListings = generateCommunitySpecificListings('Tamil Nadu', 'Delhi');
+      const delhiSampleListings = generateCommunitySpecificListings('Delhi', 'Delhi');
+      
+      const allSampleListings = [...keralaSampleListings, ...tamilSampleListings, ...delhiSampleListings];
+      console.log('Setting sample listings:', allSampleListings);
+      setListings(allSampleListings);
     }
     
     if (savedConnections) {
