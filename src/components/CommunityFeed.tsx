@@ -73,6 +73,37 @@ const CommunityFeed = ({
   const currentCommunityName = isVisiting && visitingCommunityName ? visitingCommunityName : 
     (appliedFilter || community.name);
 
+  // Generate logical member counts based on community type
+  const getCommunityMemberCounts = () => {
+    const communityName = currentCommunityName.toLowerCase();
+    
+    // Base logic: Larger states/cities have more members, specific districts have fewer
+    if (communityName.includes('keralites in delhi')) {
+      return { total: 50, connections: Math.min(connections.length, 8), mutual: Math.min(connections.length * 2, 15) };
+    } else if (communityName.includes('keralites in tamil nadu')) {
+      return { total: 35, connections: Math.min(connections.length, 6), mutual: Math.min(connections.length * 2, 12) };
+    } else if (communityName.includes('keralites in chennai') || communityName.includes('chennai')) {
+      return { total: 18, connections: Math.min(connections.length, 4), mutual: Math.min(connections.length * 2, 8) };
+    } else if (communityName.includes('tamilians in delhi')) {
+      return { total: 28, connections: Math.min(connections.length, 5), mutual: Math.min(connections.length * 2, 10) };
+    } else if (communityName.includes('tamilians in kerala')) {
+      return { total: 12, connections: Math.min(connections.length, 3), mutual: Math.min(connections.length * 2, 6) };
+    } else if (communityName.includes('delhites') || communityName.includes('delhi')) {
+      return { total: 85, connections: Math.min(connections.length, 12), mutual: Math.min(connections.length * 2, 20) };
+    } else if (communityName.includes('malappuram')) {
+      return { total: 25, connections: Math.min(connections.length, 5), mutual: Math.min(connections.length * 2, 10) };
+    } else if (communityName.includes('kottayam') || communityName.includes('ernakulam')) {
+      return { total: 32, connections: Math.min(connections.length, 6), mutual: Math.min(connections.length * 2, 12) };
+    } else if (communityName.includes('thiruvananthapuram') || communityName.includes('kozhikode')) {
+      return { total: 28, connections: Math.min(connections.length, 5), mutual: Math.min(connections.length * 2, 10) };
+    } else {
+      // Default for smaller communities
+      return { total: 20, connections: Math.min(connections.length, 4), mutual: Math.min(connections.length * 2, 8) };
+    }
+  };
+
+  const memberCounts = getCommunityMemberCounts();
+
   const filteredListings = listings.filter(listing => {
     // Check if listing.user exists to prevent null errors
     if (!listing.user) {
@@ -558,32 +589,30 @@ const CommunityFeed = ({
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <Avatar className="w-16 h-16 border-4 border-white shadow-lg">
-                  <AvatarImage src="" />
-                  <AvatarFallback className="bg-gradient-to-br from-rose-500 to-pink-500 text-white text-xl">
-                    {user.name.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+                <div className="w-16 h-16 bg-gradient-to-br from-rose-500 to-pink-500 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
+                  <Users className="w-8 h-8 text-white" />
+                </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Welcome, {user.name}!</h2>
+                  <h2 className="text-2xl font-bold text-gray-900">{currentCommunityName}</h2>
                   <div className="flex items-center space-x-2 mt-1">
-                    <MapPin className="w-4 h-4 text-gray-500" />
+                    <Users className="w-4 h-4 text-gray-500" />
                     <span className="text-gray-600">
-                      {user.homeDistrict}, {user.homeState} → {user.currentDistrict}, {user.currentState}
+                      {memberCounts.total} members in this community
                     </span>
                   </div>
-                  <div className="flex items-center space-x-2 mt-1">
-                    <Badge variant="outline" className="border-rose-200 text-rose-700 bg-rose-50">
-                      {currentCommunityName}
-                    </Badge>
+                  <div className="flex items-center space-x-4 mt-2">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => onNavigate('connections')}
                       className="border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 h-6 px-2 text-xs"
                     >
-                      {connections.length} connections
+                      {memberCounts.connections} connections
                     </Button>
+                    <div className="flex items-center space-x-1 text-xs text-gray-600">
+                      <UserCheck className="w-3 h-3" />
+                      <span>{memberCounts.mutual} mutual connections</span>
+                    </div>
                   </div>
                 </div>
               </div>
