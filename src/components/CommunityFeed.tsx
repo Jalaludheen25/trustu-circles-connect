@@ -74,6 +74,12 @@ const CommunityFeed = ({
     (appliedFilter || community.name);
 
   const filteredListings = listings.filter(listing => {
+    // Check if listing.user exists to prevent null errors
+    if (!listing.user) {
+      console.log('Filtering listing: No user data for listing', listing.title);
+      return false;
+    }
+    
     console.log('Filtering listing:', listing.title, 'by user:', listing.user.name);
     console.log('User home state:', listing.user.homeState, 'User current state:', listing.user.currentState);
     console.log('Current user home state:', user.homeState, 'Current user current state:', user.currentState);
@@ -252,6 +258,9 @@ const CommunityFeed = ({
 
   const getTabCounts = () => {
     const allListings = listings.filter(listing => {
+      // Check if listing.user exists to prevent null errors
+      if (!listing.user) return false;
+      
       if (appliedFilter) {
         if (appliedFilter.includes(' - ')) {
           const [homeDistrict, currentLocation] = appliedFilter.split(' - ');
