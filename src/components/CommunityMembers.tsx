@@ -7,7 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Search, UserPlus, UserMinus, ArrowLeft, Eye, Lock, GraduationCap, Building2, Users } from 'lucide-react';
-import { User, Community } from '@/pages/Index';
+import { User, Community, Listing } from '@/pages/Index';
 
 interface CommunityMembersProps {
   user: User;
@@ -21,6 +21,7 @@ interface CommunityMembersProps {
   visitingCommunityName?: string;
   onDeleteProfile?: () => void;
   onEditProfile?: () => void;
+  listings: Listing[];
 }
 
 const CommunityMembers = ({ 
@@ -34,7 +35,8 @@ const CommunityMembers = ({
   isVisiting = false,
   visitingCommunityName,
   onDeleteProfile,
-  onEditProfile
+  onEditProfile,
+  listings
 }: CommunityMembersProps) => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,69 +46,134 @@ const CommunityMembers = ({
   const [showProfileView, setShowProfileView] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<User | null>(null);
 
-  // Mock community members with Malabar region names
-  const communityMembers: User[] = [
-    {
-      id: '2',
-      name: 'Fathima Ashraf',
-      gender: 'Female' as const,
-      designation: 'Student' as const,
-      homeState: user.homeState,
-      homeDistrict: user.homeDistrict,
-      currentState: user.currentState,
-      currentDistrict: user.currentDistrict,
-    },
-    {
-      id: '3',
-      name: 'Mohammed Salim',
-      gender: 'Male' as const,
-      designation: 'Working Professional' as const,
-      homeState: user.homeState,
-      homeDistrict: user.homeDistrict,
-      currentState: user.currentState,
-      currentDistrict: user.currentDistrict,
-    },
-    {
-      id: '4',
-      name: 'Anitha Menon',
-      gender: 'Female' as const,
-      designation: 'Freelancer' as const,
-      homeState: user.homeState,
-      homeDistrict: user.homeDistrict,
-      currentState: user.currentState,
-      currentDistrict: user.currentDistrict,
-    },
-    {
-      id: '5',
-      name: 'George Thomas',
-      gender: 'Male' as const,
-      designation: 'Business' as const,
-      homeState: user.homeState,
-      homeDistrict: user.homeDistrict,
-      currentState: user.currentState,
-      currentDistrict: user.currentDistrict,
-    },
-    {
-      id: '6',
-      name: 'Priya Nair',
-      gender: 'Female' as const,
-      designation: 'Student' as const,
-      homeState: user.homeState,
-      homeDistrict: user.homeDistrict,
-      currentState: user.currentState,
-      currentDistrict: user.currentDistrict,
-    },
-    {
-      id: '7',
-      name: 'Rashid Ahmed',
-      gender: 'Male' as const,
-      designation: 'Working Professional' as const,
-      homeState: user.homeState,
-      homeDistrict: user.homeDistrict,
-      currentState: user.currentState,
-      currentDistrict: user.currentDistrict,
-    }
-  ];
+  // Get community members - includes both static members and users from listings
+  const getCommunityMembers = (): User[] => {
+    const staticMembers: User[] = [
+      {
+        id: '2',
+        name: 'Fathima Ashraf',
+        gender: 'Female' as const,
+        designation: 'Student' as const,
+        homeState: user.homeState,
+        homeDistrict: user.homeDistrict,
+        currentState: user.currentState,
+        currentDistrict: user.currentDistrict,
+      },
+      {
+        id: '3',
+        name: 'Mohammed Salim',
+        gender: 'Male' as const,
+        designation: 'Working Professional' as const,
+        homeState: user.homeState,
+        homeDistrict: user.homeDistrict,
+        currentState: user.currentState,
+        currentDistrict: user.currentDistrict,
+      },
+      {
+        id: '4',
+        name: 'Anitha Menon',
+        gender: 'Female' as const,
+        designation: 'Freelancer' as const,
+        homeState: user.homeState,
+        homeDistrict: user.homeDistrict,
+        currentState: user.currentState,
+        currentDistrict: user.currentDistrict,
+      },
+      {
+        id: '5',
+        name: 'George Thomas',
+        gender: 'Male' as const,
+        designation: 'Business' as const,
+        homeState: user.homeState,
+        homeDistrict: user.homeDistrict,
+        currentState: user.currentState,
+        currentDistrict: user.currentDistrict,
+      },
+      {
+        id: '6',
+        name: 'Priya Nair',
+        gender: 'Female' as const,
+        designation: 'Student' as const,
+        homeState: user.homeState,
+        homeDistrict: user.homeDistrict,
+        currentState: user.currentState,
+        currentDistrict: user.currentDistrict,
+      },
+      {
+        id: '7',
+        name: 'Rashid Ahmed',
+        gender: 'Male' as const,
+        designation: 'Working Professional' as const,
+        homeState: user.homeState,
+        homeDistrict: user.homeDistrict,
+        currentState: user.currentState,
+        currentDistrict: user.currentDistrict,
+      }
+    ];
+
+    // Extract users from listings that belong to the current community
+    const listingUsers: User[] = [];
+    
+    listings.forEach(listing => {
+      if (!listing.user) return;
+      
+      let belongsToCurrentCommunity = false;
+      
+      if (appliedFilter) {
+        if (appliedFilter.includes(' - ')) {
+          const [homeDistrict, currentLocation] = appliedFilter.split(' - ');
+          belongsToCurrentCommunity = listing.user.homeDistrict === homeDistrict && 
+            (listing.user.currentState === currentLocation || listing.user.currentDistrict === currentLocation);
+        } else if (appliedFilter.includes(' in ')) {
+          const parts = appliedFilter.split(' in ');
+          const homeStateMap: { [key: string]: string } = {
+            'Keralites': 'Kerala',
+            'Tamilians': 'Tamil Nadu',
+            'Delhites': 'Delhi'
+          };
+          const homeState = homeStateMap[parts[0]] || parts[0];
+          const currentState = parts[1];
+          
+          belongsToCurrentCommunity = listing.user.homeState === homeState && listing.user.currentState === currentState;
+        }
+      } else if (isVisiting && visitingCommunityName) {
+        if (visitingCommunityName.includes(' in ')) {
+          const parts = visitingCommunityName.split(' in ');
+          const homeStateMap: { [key: string]: string } = {
+            'Keralites': 'Kerala',
+            'Tamilians': 'Tamil Nadu',
+            'Delhites': 'Delhi'
+          };
+          const homeState = homeStateMap[parts[0]] || parts[0];
+          const currentState = parts[1];
+          
+          belongsToCurrentCommunity = listing.user.homeState === homeState && listing.user.currentState === currentState;
+        } else {
+          belongsToCurrentCommunity = listing.user.homeState === visitingCommunityName && listing.user.currentState === visitingCommunityName;
+        }
+      } else {
+        // Default to user's own community
+        belongsToCurrentCommunity = listing.user.homeState === user.homeState && 
+          listing.user.currentState === user.currentState;
+      }
+      
+      if (belongsToCurrentCommunity && !listingUsers.find(u => u.id === listing.user.id)) {
+        listingUsers.push(listing.user);
+      }
+    });
+
+    // Combine static members with listing users, remove duplicates
+    const allMembers = [...staticMembers];
+    listingUsers.forEach(listingUser => {
+      if (!allMembers.find(member => member.id === listingUser.id)) {
+        allMembers.push(listingUser);
+      }
+    });
+
+    return allMembers;
+  };
+
+  const communityMembers = getCommunityMembers();
 
   const filteredMembers = communityMembers.filter(member => {
     const matchesSearch = !searchTerm || 

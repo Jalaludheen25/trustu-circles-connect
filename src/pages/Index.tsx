@@ -776,6 +776,7 @@ const Index = () => {
               : ''}
             onDeleteProfile={handleDeleteProfile}
             onEditProfile={handleEditProfile}
+            listings={listings}
           />
         );
       default:
