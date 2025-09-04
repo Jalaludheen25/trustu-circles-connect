@@ -9,24 +9,17 @@ import { useToast } from '@/hooks/use-toast';
 import { User } from '@/pages/Index';
 
 interface JoinCommunityProps {
-  onComplete: (communityData: { homeState: string; homeDistrict: string; currentState: string; currentDistrict: string }) => void;
+  onComplete: (communityData: { homeState: string; institution: string }) => void;
   user: User | null;
 }
 
 const JoinCommunity = ({ onComplete, user }: JoinCommunityProps) => {
   const [homeState, setHomeState] = useState('');
-  const [homeDistrict, setHomeDistrict] = useState('');
-  const [currentState, setCurrentState] = useState('');
-  const [currentDistrict, setCurrentDistrict] = useState('');
+  const [institution, setInstitution] = useState('');
   const { toast } = useToast();
 
-  const states = ['Kerala', 'Tamil Nadu', 'Delhi'];
-  
-  const districts = {
-    'Kerala': ['Thiruvananthapuram', 'Kollam', 'Pathanamthitta', 'Alappuzha', 'Kottayam', 'Idukki', 'Ernakulam', 'Thrissur', 'Palakkad', 'Malappuram', 'Kozhikode', 'Wayanad', 'Kannur', 'Kasaragod'],
-    'Tamil Nadu': ['Chennai', 'Coimbatore', 'Madurai', 'Tiruchirappalli', 'Salem', 'Tirunelveli', 'Tiruppur', 'Vellore', 'Erode', 'Thoothukkudi', 'Dindigul', 'Thanjavur'],
-    'Delhi': ['Central Delhi', 'North Delhi', 'South Delhi', 'East Delhi', 'West Delhi', 'North East Delhi', 'North West Delhi', 'South East Delhi', 'South West Delhi', 'Shahdara', 'New Delhi']
-  };
+  const states = ['Kerala'];
+  const institutions = ['Jamia Millia Islamia'];
 
   const handleJoin = () => {
     if (!homeState) {
@@ -38,47 +31,23 @@ const JoinCommunity = ({ onComplete, user }: JoinCommunityProps) => {
       return;
     }
 
-    if (!homeDistrict) {
+    if (!institution) {
       toast({
-        title: "Home District Required",
-        description: "Please select your home district",
+        title: "Institution Required",
+        description: "Please select your institution",
         variant: "destructive"
       });
       return;
     }
-
-    if (!currentState) {
-      toast({
-        title: "Current State Required",
-        description: "Please select your current state",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!currentDistrict) {
-      toast({
-        title: "Current District Required",
-        description: "Please select your current district",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const communityName = homeState === currentState 
-      ? homeState 
-      : `${homeState === 'Kerala' ? 'Keralites' : homeState === 'Tamil Nadu' ? 'Tamilians' : 'Delhites'} in ${currentState}`;
 
     toast({
       title: "Welcome to your community!",
-      description: `You've joined: ${communityName}`,
+      description: "You've joined: Keralites in Jamia",
     });
 
     onComplete({
       homeState,
-      homeDistrict,
-      currentState,
-      currentDistrict
+      institution
     });
   };
 
@@ -101,10 +70,7 @@ const JoinCommunity = ({ onComplete, user }: JoinCommunityProps) => {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="home-state">Your Home State *</Label>
-              <Select value={homeState} onValueChange={(value) => {
-                setHomeState(value);
-                setHomeDistrict('');
-              }}>
+              <Select value={homeState} onValueChange={setHomeState}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select your home state" />
                 </SelectTrigger>
@@ -119,58 +85,19 @@ const JoinCommunity = ({ onComplete, user }: JoinCommunityProps) => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="home-district">Your Home District *</Label>
+              <Label htmlFor="institution">Institution Studying *</Label>
               <Select 
-                value={homeDistrict} 
-                onValueChange={setHomeDistrict}
+                value={institution} 
+                onValueChange={setInstitution}
                 disabled={!homeState}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select your home district" />
+                  <SelectValue placeholder="Select your institution" />
                 </SelectTrigger>
                 <SelectContent>
-                  {homeState && districts[homeState as keyof typeof districts]?.map((district) => (
-                    <SelectItem key={district} value={district}>
-                      {district}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="current-state">Current Place of Living (State) *</Label>
-              <Select value={currentState} onValueChange={(value) => {
-                setCurrentState(value);
-                setCurrentDistrict('');
-              }}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select your current state" />
-                </SelectTrigger>
-                <SelectContent>
-                  {states.map((state) => (
-                    <SelectItem key={state} value={state}>
-                      {state}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="current-district">Current District *</Label>
-              <Select 
-                value={currentDistrict} 
-                onValueChange={setCurrentDistrict}
-                disabled={!currentState}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select your current district" />
-                </SelectTrigger>
-                <SelectContent>
-                  {currentState && districts[currentState as keyof typeof districts]?.map((district) => (
-                    <SelectItem key={district} value={district}>
-                      {district}
+                  {institutions.map((inst) => (
+                    <SelectItem key={inst} value={inst}>
+                      {inst}
                     </SelectItem>
                   ))}
                 </SelectContent>

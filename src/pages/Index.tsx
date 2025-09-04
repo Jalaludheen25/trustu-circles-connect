@@ -19,6 +19,8 @@ export type User = {
   currentDistrict: string;
   phone?: string;
   email?: string;
+  contact?: string;
+  institution?: string;
   isProfileLocked?: boolean;
   institute?: string;
   company?: string;
@@ -608,12 +610,30 @@ const Index = () => {
     }
   };
 
-  const handleJoinCommunity = (communityData: Partial<User>) => {
-    const updatedUser = { ...user, ...communityData } as User;
+  const handleJoinCommunity = (communityData: { homeState: string; institution: string }) => {
+    if (!user) return;
+    
+    const updatedUser = {
+      ...user,
+      homeState: communityData.homeState,
+      homeDistrict: 'Various',
+      currentState: 'Delhi',
+      currentDistrict: 'South Delhi',
+      institution: communityData.institution
+    };
+    
     setUser(updatedUser);
     
-    const communityName = generateCommunityName(updatedUser);
-    setCommunity({ id: '1', name: communityName, members: [updatedUser] });
+    const communityName = 'Keralites in Jamia';
+    setCommunity({
+      id: '1',
+      name: communityName,
+      members: [updatedUser]
+    });
+    
+    // Generate sample listings for Keralites in Jamia community
+    const communityListings = generateCommunitySpecificListings(communityData.homeState, 'Delhi');
+    setListings(communityListings);
     
     setCurrentStep('feed');
   };
@@ -738,6 +758,8 @@ const Index = () => {
             onDeleteListing={handleDeleteListing}
             onEditListing={handleEditListing}
             connections={connections}
+            onUpdateUser={(userData) => setUser(prev => ({ ...prev, ...userData } as User))}
+            onLogout={handleDeleteProfile}
           />
         );
       case 'add-service':

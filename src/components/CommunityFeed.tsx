@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Plus, Users, User, Settings, Heart, MapPin, Calendar, Star, Filter, Search, Home, Briefcase, X, UserCheck, UserX } from 'lucide-react';
 import { User as UserType, Community, Listing } from '@/pages/Index';
 import CommunityFilter from './CommunityFilter';
+import ProfileUpdateDialog from './ProfileUpdateDialog';
 
 interface CommunityFeedProps {
   user: UserType;
@@ -25,6 +26,8 @@ interface CommunityFeedProps {
   onDeleteListing: (listingId: string) => void;
   onEditListing: (listing: Listing) => void;
   connections: UserType[];
+  onUpdateUser: (userData: Partial<UserType>) => void;
+  onLogout: () => void;
 }
 
 const CommunityFeed = ({ 
@@ -40,13 +43,16 @@ const CommunityFeed = ({
   onVisitCommunity,
   onDeleteListing,
   onEditListing,
-  connections
+  connections,
+  onUpdateUser,
+  onLogout
 }: CommunityFeedProps) => {
   const { toast } = useToast();
   const [showFilterDialog, setShowFilterDialog] = useState(false);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [showListingDetails, setShowListingDetails] = useState(false);
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState('accommodation');
+  const [showProfileDialog, setShowProfileDialog] = useState(false);
   
   // Filter states
   const [accommodationFilters, setAccommodationFilters] = useState({
@@ -158,8 +164,8 @@ const CommunityFeed = ({
 
     if (!communityFiltered) return false;
     
-    // Apply tab filter
-    if (activeTab !== 'all' && listing.type !== activeTab) return false;
+    // Apply tab filter - removed 'all' tab
+    if (activeTab && listing.type !== activeTab) return false;
     
     // Apply specific filters based on listing type
     if (listing.type === 'accommodation') {
@@ -354,7 +360,17 @@ const CommunityFeed = ({
               Clear
             </Button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+            <Select value={accommodationFilters.accommodationType} onValueChange={(value) => setAccommodationFilters(prev => ({...prev, accommodationType: value}))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Connection Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="friends">Friends</SelectItem>
+                <SelectItem value="mutual">Mutual Friends</SelectItem>
+              </SelectContent>
+            </Select>
             <Select value={accommodationFilters.accommodationType} onValueChange={(value) => setAccommodationFilters(prev => ({...prev, accommodationType: value}))}>
               <SelectTrigger>
                 <SelectValue placeholder="Accommodation Type" />
@@ -572,7 +588,7 @@ const CommunityFeed = ({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onNavigate('profile')}
+                onClick={() => setShowProfileDialog(true)}
                 className="border-gray-200 hover:border-rose-300"
               >
                 <Settings className="w-4 h-4 mr-2" />
@@ -661,11 +677,7 @@ const CommunityFeed = ({
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-4 w-full mb-4 h-12">
-              <TabsTrigger value="all" className="flex items-center space-x-2 text-sm font-medium">
-                <span>All Listings</span>
-                <Badge variant="secondary" className="ml-1">{tabCounts.all}</Badge>
-              </TabsTrigger>
+            <TabsList className="grid grid-cols-3 w-full mb-4 h-12">
               <TabsTrigger value="accommodation" className="flex items-center space-x-2 text-sm font-medium">
                 <Home className="w-4 h-4" />
                 <span>Accommodation</span>
@@ -719,84 +731,89 @@ const CommunityFeed = ({
                   </CardContent>
                 </Card>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredListings.map((listing) => (
-                    <Card
-                      key={listing.id}
-                      className="border-0 shadow-lg bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-200 cursor-pointer transform hover:scale-[1.02]"
-                      onClick={() => handleListingClick(listing)}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredListings.map((listing) => (
+                      <Card
+                        key={listing.id}
+                        className="border-0 shadow-md bg-white/80 backdrop-blur-sm hover:shadow-lg transition-all duration-200 cursor-pointer"
+                        onClick={() => handleListingClick(listing)}
                     >
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between">
+                        <CardHeader className="pb-2">
                           <div className="flex items-center space-x-3">
-                            <Avatar className="w-10 h-10">
+                            <Avatar className="w-8 h-8">
                               <AvatarImage src="" />
-                              <AvatarFallback className="bg-gradient-to-br from-rose-500 to-pink-500 text-white">
+                              <AvatarFallback className="bg-gradient-to-br from-rose-500 to-pink-500 text-white text-xs">
                                 {listing.user.name.charAt(0).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
-                            <div>
-                              <p className="font-medium text-gray-900">{listing.user.name}</p>
-                              <p className="text-xs text-gray-500">{listing.user.designation}</p>
-                            </div>
-                          </div>
-                          <Badge className={`${getListingTypeColor(listing.type)} border`}>
-                            {getListingIcon(listing.type)}
-                            <span className="ml-1 capitalize">{listing.type}</span>
-                          </Badge>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{listing.title}</h3>
-                        <p className="text-gray-600 text-sm mb-3 line-clamp-3">{listing.description}</p>
-                        
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center text-sm text-gray-500">
-                            <MapPin className="w-4 h-4 mr-1" />
-                            <span className="truncate">{listing.location}</span>
-                          </div>
-                          {listing.price && (
-                            <span className="font-semibold text-green-600">{listing.price}</span>
-                          )}
-                        </div>
-                        
-                        {/* Connection and Mutual Friends Info */}
-                        {listing.userId !== user.id && (
-                          <div className="mt-3 pt-3 border-t border-gray-100">
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="flex items-center space-x-2">
-                                {isConnectedTo(listing.userId) ? (
-                                  <div className="flex items-center text-green-600 text-xs">
-                                    <UserCheck className="w-3 h-3 mr-1" />
-                                    <span>Connected</span>
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center text-gray-500 text-xs">
-                                    <UserX className="w-3 h-3 mr-1" />
-                                    <span>Not connected</span>
-                                  </div>
-                                )}
+                            <div className="flex-1">
+                              <p className="font-medium text-gray-900 text-sm">{listing.user.name}</p>
+                              <div className="flex items-center space-x-2 text-xs text-gray-500">
+                                <span className="capitalize">{listing.type}</span>
+                                <span>•</span>
+                                <span>{listing.location}</span>
+                                <span>•</span>
+                                <span>{new Date(listing.createdAt).toLocaleDateString()}</span>
                               </div>
-                            </div>
-                            
-                            {/* Mutual Friends */}
-                            <div className="text-xs text-gray-500">
-                              {(() => {
-                                const mutualFriends = getMutualFriends(listing.userId);
-                                if (mutualFriends.length > 0) {
-                                  return (
-                                    <span>
-                                      Mutual friends: {mutualFriends.slice(0, 2).join(', ')}
-                                      {mutualFriends.length > 2 && ` +${mutualFriends.length - 2} more`}
-                                    </span>
-                                  );
-                                } else {
-                                  return <span>No mutual friends</span>;
-                                }
-                              })()}
+                              {/* Mutual Friends Count */}
+                              {listing.userId !== user.id && (
+                                <div className="mt-1">
+                                  {isConnectedTo(listing.userId) ? (
+                                    <div className="flex items-center text-green-600 text-xs">
+                                      <UserCheck className="w-3 h-3 mr-1" />
+                                      <span>{getMutualFriends(listing.userId).length} mutual friends</span>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center text-gray-500 text-xs">
+                                      <UserX className="w-3 h-3 mr-1" />
+                                      <span>Not Connected • {getMutualFriends(listing.userId).length} mutual friends</span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </div>
-                        )}
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          <div className="flex items-center justify-between">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleListingClick(listing);
+                              }}
+                              className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                            >
+                              View More Details
+                            </Button>
+                            {listing.userId === user.id && (
+                              <div className="flex space-x-1">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onEditListing(listing);
+                                  }}
+                                  className="text-xs px-2 py-1"
+                                >
+                                  Edit
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDeleteListing(listing.id);
+                                  }}
+                                  className="text-xs px-2 py-1 text-red-600 border-red-200 hover:bg-red-50"
+                                >
+                                  Delete
+                                </Button>
+                              </div>
+                            )}
+                          </div>
                         
                         <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
                           <div className="flex items-center text-xs text-gray-500">
@@ -930,6 +947,15 @@ const CommunityFeed = ({
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Profile Update Dialog */}
+      <ProfileUpdateDialog
+        user={user}
+        open={showProfileDialog}
+        onOpenChange={setShowProfileDialog}
+        onUpdate={onUpdateUser}
+        onLogout={onLogout}
+      />
     </div>
   );
 };

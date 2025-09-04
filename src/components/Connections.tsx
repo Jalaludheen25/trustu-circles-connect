@@ -318,6 +318,23 @@ const Connections = ({
     return connections.some(conn => conn.id === memberId);
   };
 
+  const getMutualFriends = (userId: string) => {
+    // For demo purposes, we'll simulate mutual friends based on some criteria
+    // In a real app, this would come from your backend
+    const mutualFriendsData: { [key: string]: string[] } = {
+      'user1': ['Arjun Nair', 'Priya Menon'],
+      'user2': ['Arjun Nair'],
+      'user3': [],
+      'user4': ['Priya Menon', 'Sara Ahmed'],
+      'user5': ['Arjun Nair', 'Priya Menon'],
+      'user6': ['Sara Ahmed'],
+      'user7': ['Priya Menon'],
+      'user8': ['Arjun Nair', 'Sara Ahmed']
+    };
+    
+    return mutualFriendsData[userId] || [];
+  };
+
   const handleToggleConnection = (member: UserType) => {
     if (isConnected(member.id)) {
       onRemoveConnection(member.id);

@@ -190,11 +190,19 @@ const AddService = ({ user, onComplete, onBack, existingListing, isEditing = fal
 
                 <div className="space-y-2">
                   <Label>Location *</Label>
-                  <Input
-                    placeholder="Enter location"
-                    value={formData.location || ''}
-                    onChange={(e) => setFormData({...formData, location: e.target.value})}
-                  />
+                  <Select 
+                    value={formData.location || ''} 
+                    onValueChange={(value) => setFormData({...formData, location: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {['Bhatla House', 'Zakir Nagar', 'Gafoor Nagar', 'Ghaffar Manzil', 'Haji Colony', 'Johri Fahm', 'Okhla Vihar', 'Noor Nagar', 'Okhla Head', 'Abul Fazal Enclave', 'Shaheen Bagh'].map((location) => (
+                        <SelectItem key={location} value={location}>{location}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">
@@ -242,12 +250,13 @@ const AddService = ({ user, onComplete, onBack, existingListing, isEditing = fal
                     <Label>Rent Per Day</Label>
                     <Select 
                       value={formData.rentPerDay || ''} 
-                      onValueChange={(value) => setFormData({...formData, rentPerDay: value})}
+                      onValueChange={(value) => setFormData({...formData, rentPerDay: value === 'none' ? '' : value})}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select range" />
+                        <SelectValue placeholder="Select range (optional)" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="none">Not specified</SelectItem>
                         <SelectItem value="100-200">₹100-200</SelectItem>
                         <SelectItem value="200-400">₹200-400</SelectItem>
                         <SelectItem value="400-600">₹400-600</SelectItem>
@@ -261,12 +270,13 @@ const AddService = ({ user, onComplete, onBack, existingListing, isEditing = fal
                     <Label>Rent Per Month</Label>
                     <Select 
                       value={formData.rentPerMonth || ''} 
-                      onValueChange={(value) => setFormData({...formData, rentPerMonth: value})}
+                      onValueChange={(value) => setFormData({...formData, rentPerMonth: value === 'none' ? '' : value})}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select range" />
+                        <SelectValue placeholder="Select range (optional)" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="none">Not specified</SelectItem>
                         <SelectItem value="1500-2500">₹1500-2500</SelectItem>
                         <SelectItem value="2500-3500">₹2500-3500</SelectItem>
                         <SelectItem value="3500-4500">₹3500-4500</SelectItem>
