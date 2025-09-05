@@ -6,11 +6,24 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Users, User, Settings, Heart, MapPin, Calendar, Star, Filter, Search, Home, Briefcase, X, UserCheck, UserX } from 'lucide-react';
+import { Plus, Users, User, Settings, Heart, MapPin, Calendar, Star, Filter, Search, Home, Briefcase, X, UserCheck, UserX, MessageCircle, TrendingUp, Trash2 } from 'lucide-react';
 import { User as UserType, Community, Listing } from '@/pages/Index';
 import CommunityFilter from './CommunityFilter';
 import ProfileUpdateDialog from './ProfileUpdateDialog';
+
+interface Post {
+  id: string;
+  userId: string;
+  user: UserType;
+  content: string;
+  upvotes: number;
+  responses: number;
+  createdAt: string;
+  hasUpvoted: boolean;
+}
 
 interface CommunityFeedProps {
   user: UserType;
@@ -51,8 +64,33 @@ const CommunityFeed = ({
   const [showFilterDialog, setShowFilterDialog] = useState(false);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [showListingDetails, setShowListingDetails] = useState(false);
-  const [activeTab, setActiveTab] = useState('accommodation');
+  const [activeTab, setActiveTab] = useState('community');
   const [showProfileDialog, setShowProfileDialog] = useState(false);
+  
+  // Posts state
+  const [posts, setPosts] = useState<Post[]>([
+    {
+      id: 'post1',
+      userId: 'user1',
+      user: { id: 'user1', name: 'Arjun K', phone: '9876543210', homeState: 'Kerala', homeDistrict: 'Malappuram', currentState: 'Delhi', currentDistrict: 'New Delhi', designation: 'Student', gender: 'Male' },
+      content: 'Anyone knows a xerox shop near Noor Nagar? Need to print some documents urgently.',
+      upvotes: 7,
+      responses: 3,
+      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+      hasUpvoted: false
+    },
+    {
+      id: 'post2',
+      userId: 'user2',
+      user: { id: 'user2', name: 'Priya S', phone: '9876543211', homeState: 'Kerala', homeDistrict: 'Kottayam', currentState: 'Delhi', currentDistrict: 'New Delhi', designation: 'Student', gender: 'Female' },
+      content: 'Is there anyone who has taken Indo-Arab as CBCS course? Need some guidance about the syllabus.',
+      upvotes: 12,
+      responses: 8,
+      createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+      hasUpvoted: false
+    }
+  ]);
+  const [newPostContent, setNewPostContent] = useState('');
   
   // Filter states
   const [accommodationFilters, setAccommodationFilters] = useState({
@@ -66,7 +104,8 @@ const CommunityFeed = ({
   const [proxyFilters, setProxyFilters] = useState({
     serviceType: '',
     chargeRange: '',
-    location: ''
+    location: '',
+    date: ''
   });
   
   const [productFilters, setProductFilters] = useState({
@@ -241,7 +280,8 @@ const CommunityFeed = ({
     setProxyFilters({
       serviceType: '',
       chargeRange: '',
-      location: ''
+      location: '',
+      date: ''
     });
     setProductFilters({
       itemType: '',
@@ -447,17 +487,17 @@ const CommunityFeed = ({
               Clear
             </Button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Select value={proxyFilters.serviceType} onValueChange={(value) => setProxyFilters(prev => ({...prev, serviceType: value}))}>
               <SelectTrigger>
                 <SelectValue placeholder="Service Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Tourist Guide">Tourist Guide</SelectItem>
-                <SelectItem value="Proxy Work (Jamia)">Proxy Work (Jamia)</SelectItem>
-                <SelectItem value="Proxy Work (DU)">Proxy Work (DU)</SelectItem>
-                <SelectItem value="Proxy Work (Anywhere in Delhi)">Proxy Work (Anywhere in Delhi)</SelectItem>
-                <SelectItem value="Room Search Assistance">Room Search Assistance</SelectItem>
+                <SelectItem value="Academic/Admission Related Assistance">Academic/Admission Related Assistance</SelectItem>
+                <SelectItem value="Accommodation Assistance">Accommodation Assistance</SelectItem>
+                <SelectItem value="General Errands/Office Work">General Errands/Office Work</SelectItem>
+                <SelectItem value="Trusted Carry">Trusted Carry</SelectItem>
+                <SelectItem value="Travel Guide">Travel Guide</SelectItem>
               </SelectContent>
             </Select>
             
@@ -466,20 +506,24 @@ const CommunityFeed = ({
                 <SelectValue placeholder="Charge Range" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="100-200">₹100-200</SelectItem>
-                <SelectItem value="200-500">₹200-500</SelectItem>
-                <SelectItem value="500-700">₹500-700</SelectItem>
+                <SelectItem value="100-300">₹100-300</SelectItem>
+                <SelectItem value="400-600">₹400-600</SelectItem>
                 <SelectItem value="700-1000">₹700-1000</SelectItem>
                 <SelectItem value="1000+">₹1000 and above</SelectItem>
               </SelectContent>
             </Select>
             
-            <input
-              type="text"
-              placeholder="Location"
+            <Input
+              placeholder="Location (optional)"
               value={proxyFilters.location}
               onChange={(e) => setProxyFilters(prev => ({...prev, location: e.target.value}))}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+
+            <Input
+              type="date"
+              placeholder="Date"
+              value={proxyFilters.date}
+              onChange={(e) => setProxyFilters(prev => ({...prev, date: e.target.value}))}
             />
           </div>
         </div>
@@ -659,197 +703,487 @@ const CommunityFeed = ({
           </CardContent>
         </Card>
 
-        {/* Listings Section with Tabs */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-gray-900">Community Listings</h2>
-            <span className="text-gray-600">{filteredListings.length} listings available</span>
-          </div>
+        {/* Main Content with Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid grid-cols-4 w-full mb-6 h-12">
+            <TabsTrigger value="community" className="flex items-center space-x-2 text-sm font-medium">
+              <MessageCircle className="w-4 h-4" />
+              <span>Community</span>
+            </TabsTrigger>
+            <TabsTrigger value="accommodation" className="flex items-center space-x-2 text-sm font-medium">
+              <Home className="w-4 h-4" />
+              <span>Accommodation</span>
+              <Badge variant="secondary" className="ml-1">{tabCounts.accommodation}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="proxy" className="flex items-center space-x-2 text-sm font-medium">
+              <User className="w-4 h-4" />
+              <span>Proxy</span>
+              <Badge variant="secondary" className="ml-1">{tabCounts.proxy}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="product" className="flex items-center space-x-2 text-sm font-medium">
+              <Briefcase className="w-4 h-4" />
+              <span>Buy & Sell</span>
+              <Badge variant="secondary" className="ml-1">{tabCounts.product}</Badge>
+            </TabsTrigger>
+          </TabsList>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-3 w-full mb-4 h-12">
-              <TabsTrigger value="accommodation" className="flex items-center space-x-2 text-sm font-medium">
-                <Home className="w-4 h-4" />
-                <span>Accommodation</span>
-                <Badge variant="secondary" className="ml-1">{tabCounts.accommodation}</Badge>
-              </TabsTrigger>
-              <TabsTrigger value="proxy" className="flex items-center space-x-2 text-sm font-medium">
-                <User className="w-4 h-4" />
-                <span>Proxy</span>
-                <Badge variant="secondary" className="ml-1">{tabCounts.proxy}</Badge>
-              </TabsTrigger>
-              <TabsTrigger value="product" className="flex items-center space-x-2 text-sm font-medium">
-                <Briefcase className="w-4 h-4" />
-                <span>Buy & Sell</span>
-                <Badge variant="secondary" className="ml-1">{tabCounts.product}</Badge>
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Render filters based on active tab */}
-            {renderFilters()}
-
-            <TabsContent value={activeTab}>
-              {filteredListings.length === 0 ? (
-                <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
-                  <CardContent className="p-12 text-center">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Search className="w-8 h-8 text-gray-400" />
+          <TabsContent value="community">
+            {/* Ask Something Section */}
+            <Card className="mb-6 border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="flex items-start space-x-4">
+                  <Avatar className="w-10 h-10">
+                    <AvatarImage src="" />
+                    <AvatarFallback className="bg-gradient-to-br from-rose-500 to-pink-500 text-white">
+                      {user.name.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <Textarea
+                      placeholder="Ask any query to your community..."
+                      value={newPostContent}
+                      onChange={(e) => setNewPostContent(e.target.value)}
+                      className="border-gray-200 focus:border-rose-300 resize-none"
+                      rows={3}
+                    />
+                    <div className="flex justify-end mt-3">
+                      <Button
+                        onClick={() => {
+                          if (newPostContent.trim()) {
+                            const newPost: Post = {
+                              id: `post${Date.now()}`,
+                              userId: user.id,
+                              user: user,
+                              content: newPostContent,
+                              upvotes: 0,
+                              responses: 0,
+                              createdAt: new Date().toISOString(),
+                              hasUpvoted: false
+                            };
+                            setPosts([newPost, ...posts]);
+                            setNewPostContent('');
+                            toast({
+                              title: "Posted Successfully",
+                              description: "Your query has been posted to the community.",
+                            });
+                          }
+                        }}
+                        disabled={!newPostContent.trim()}
+                        className="bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600"
+                      >
+                        Post Query
+                      </Button>
                     </div>
-                    <h3 className="text-xl font-semibold text-gray-700 mb-2">No listings found</h3>
-                    <p className="text-gray-500 mb-6">
-                      {activeTab === 'all' 
-                        ? "Be the first to add a service or product to your community!"
-                        : `No ${activeTab} listings available in your community.`
-                      }
-                    </p>
-                     {!isVisiting && (
-                      <div className="flex justify-center space-x-4">
-                        <Button
-                          onClick={() => onNavigate('add-service')}
-                          className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
-                        >
-                          Add Service
-                        </Button>
-                        <Button
-                          onClick={() => onNavigate('sell-product')}
-                          className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
-                        >
-                          Sell Product
-                        </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Posts Feed */}
+            <div className="space-y-4">
+              {posts
+                .sort((a, b) => b.upvotes - a.upvotes)
+                .map((post) => (
+                <Card key={post.id} className="border-0 shadow-md bg-white/80 backdrop-blur-sm">
+                  <CardContent className="p-6">
+                    <div className="flex items-start space-x-4">
+                      <Avatar className="w-10 h-10">
+                        <AvatarImage src="" />
+                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white">
+                          {post.user.name.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-semibold text-gray-900">{post.user.name}</h4>
+                            <p className="text-sm text-gray-600">{post.user.designation} • {new Date(post.createdAt).toLocaleTimeString()}</p>
+                          </div>
+                          {post.userId === user.id && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setPosts(posts.filter(p => p.id !== post.id));
+                                toast({
+                                  title: "Post Deleted",
+                                  description: "Your post has been removed.",
+                                });
+                              }}
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                        <p className="text-gray-800 mt-3">{post.content}</p>
+                        <div className="flex items-center space-x-4 mt-4">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setPosts(posts.map(p => 
+                                p.id === post.id 
+                                  ? { ...p, upvotes: post.hasUpvoted ? p.upvotes - 1 : p.upvotes + 1, hasUpvoted: !post.hasUpvoted }
+                                  : p
+                              ));
+                            }}
+                            className={`flex items-center space-x-1 ${post.hasUpvoted ? 'text-rose-600' : 'text-gray-500'} hover:text-rose-600`}
+                          >
+                            <TrendingUp className="w-4 h-4" />
+                            <span>{post.upvotes}</span>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="flex items-center space-x-1 text-gray-500 hover:text-blue-600"
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                            <span>Respond ({post.responses})</span>
+                          </Button>
+                        </div>
                       </div>
-                    )}
+                    </div>
                   </CardContent>
                 </Card>
-              ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredListings.map((listing) => (
-                      <Card
-                        key={listing.id}
-                        className="border-0 shadow-md bg-white/80 backdrop-blur-sm hover:shadow-lg transition-all duration-200 cursor-pointer"
-                        onClick={() => handleListingClick(listing)}
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="accommodation">
+            {renderFilters()}
+            
+            {filteredListings.filter(l => l.type === 'accommodation').length === 0 ? (
+              <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+                <CardContent className="p-12 text-center">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Search className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-700 mb-2">No accommodation listings found</h3>
+                  <p className="text-gray-500 mb-6">No accommodation listings available in your community.</p>
+                  {!isVisiting && (
+                    <Button
+                      onClick={() => onNavigate('add-service')}
+                      className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
                     >
-                        <CardHeader className="pb-2">
-                          <div className="flex items-center space-x-3">
-                            <Avatar className="w-8 h-8">
-                              <AvatarImage src="" />
-                              <AvatarFallback className="bg-gradient-to-br from-rose-500 to-pink-500 text-white text-xs">
-                                {listing.user.name.charAt(0).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1">
-                              <p className="font-medium text-gray-900 text-sm">{listing.user.name}</p>
-                              <div className="flex items-center space-x-2 text-xs text-gray-500">
-                                <span className="capitalize">{listing.type}</span>
-                                <span>•</span>
-                                <span>{listing.location}</span>
-                                <span>•</span>
-                                <span>{new Date(listing.createdAt).toLocaleDateString()}</span>
-                              </div>
-                              {/* Mutual Friends Count */}
-                              {listing.userId !== user.id && (
-                                <div className="mt-1">
-                                  {isConnectedTo(listing.userId) ? (
-                                    <div className="flex items-center text-green-600 text-xs">
-                                      <UserCheck className="w-3 h-3 mr-1" />
-                                      <span>{getMutualFriends(listing.userId).length} mutual friends</span>
-                                    </div>
-                                  ) : (
-                                    <div className="flex items-center text-gray-500 text-xs">
-                                      <UserX className="w-3 h-3 mr-1" />
-                                      <span>Not Connected • {getMutualFriends(listing.userId).length} mutual friends</span>
-                                    </div>
-                                  )}
+                      Add Service
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredListings.filter(l => l.type === 'accommodation').map((listing) => (
+                  <Card
+                    key={listing.id}
+                    className="border-0 shadow-md bg-white/80 backdrop-blur-sm hover:shadow-lg transition-all duration-200 cursor-pointer"
+                    onClick={() => handleListingClick(listing)}
+                  >
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center space-x-3">
+                        <Avatar className="w-8 h-8">
+                          <AvatarImage src="" />
+                          <AvatarFallback className="bg-gradient-to-br from-rose-500 to-pink-500 text-white text-xs">
+                            {listing.user.name.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900 text-sm">{listing.user.name}</p>
+                          <div className="flex items-center space-x-2 text-xs text-gray-500">
+                            <span className="capitalize">{listing.type}</span>
+                            <span>•</span>
+                            <span>{listing.location}</span>
+                            <span>•</span>
+                            <span>{new Date(listing.createdAt).toLocaleDateString()}</span>
+                          </div>
+                          {listing.userId !== user.id && (
+                            <div className="mt-1">
+                              {isConnectedTo(listing.userId) ? (
+                                <div className="flex items-center text-green-600 text-xs">
+                                  <UserCheck className="w-3 h-3 mr-1" />
+                                  <span>{getMutualFriends(listing.userId).length} mutual friends</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center text-gray-500 text-xs">
+                                  <UserX className="w-3 h-3 mr-1" />
+                                  <span>Not Connected • {getMutualFriends(listing.userId).length} mutual friends</span>
                                 </div>
                               )}
                             </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="pt-0">
-                          <div className="flex items-center justify-between">
+                          )}
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div className="flex items-center justify-between">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleListingClick(listing);
+                          }}
+                          className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                        >
+                          View More Details
+                        </Button>
+                        {listing.userId === user.id && (
+                          <div className="flex space-x-1">
                             <Button 
                               variant="outline" 
-                              size="sm" 
+                              size="sm"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleListingClick(listing);
+                                onEditListing(listing);
                               }}
-                              className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                              className="text-xs px-2 py-1"
                             >
-                              View More Details
+                              Edit
                             </Button>
-                            {listing.userId === user.id && (
-                              <div className="flex space-x-1">
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onEditListing(listing);
-                                  }}
-                                  className="text-xs px-2 py-1"
-                                >
-                                  Edit
-                                </Button>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onDeleteListing(listing.id);
-                                  }}
-                                  className="text-xs px-2 py-1 text-red-600 border-red-200 hover:bg-red-50"
-                                >
-                                  Delete
-                                </Button>
-                              </div>
-                            )}
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDeleteListing(listing.id);
+                              }}
+                              className="text-xs px-2 py-1 text-red-600 border-red-200 hover:bg-red-50"
+                            >
+                              Delete
+                            </Button>
                           </div>
-                        
-                        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-                          <div className="flex items-center text-xs text-gray-500">
-                            <Calendar className="w-3 h-3 mr-1" />
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="proxy">
+            {renderFilters()}
+            
+            {filteredListings.filter(l => l.type === 'proxy').length === 0 ? (
+              <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+                <CardContent className="p-12 text-center">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Search className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-700 mb-2">No proxy service listings found</h3>
+                  <p className="text-gray-500 mb-6">No proxy service listings available in your community.</p>
+                  {!isVisiting && (
+                    <Button
+                      onClick={() => onNavigate('add-service')}
+                      className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
+                    >
+                      Add Service
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredListings.filter(l => l.type === 'proxy').map((listing) => (
+                  <Card
+                    key={listing.id}
+                    className="border-0 shadow-md bg-white/80 backdrop-blur-sm hover:shadow-lg transition-all duration-200 cursor-pointer"
+                    onClick={() => handleListingClick(listing)}
+                  >
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center space-x-3">
+                        <Avatar className="w-8 h-8">
+                          <AvatarImage src="" />
+                          <AvatarFallback className="bg-gradient-to-br from-rose-500 to-pink-500 text-white text-xs">
+                            {listing.user.name.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900 text-sm">{listing.user.name}</p>
+                          <div className="flex items-center space-x-2 text-xs text-gray-500">
+                            <span className="capitalize">{listing.type}</span>
+                            <span>•</span>
+                            <span>{listing.location}</span>
+                            <span>•</span>
                             <span>{new Date(listing.createdAt).toLocaleDateString()}</span>
                           </div>
-                          
-                          {listing.userId === user.id && (
-                            <div className="flex space-x-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onEditListing(listing);
-                                }}
-                                className="h-7 px-2 text-xs"
-                              >
-                                Edit
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onDeleteListing(listing.id);
-                                  toast({
-                                    title: "Listing Deleted",
-                                    description: "Your listing has been removed.",
-                                  });
-                                }}
-                                className="h-7 px-2 text-xs"
-                              >
-                                Delete
-                              </Button>
+                          {listing.userId !== user.id && (
+                            <div className="mt-1">
+                              {isConnectedTo(listing.userId) ? (
+                                <div className="flex items-center text-green-600 text-xs">
+                                  <UserCheck className="w-3 h-3 mr-1" />
+                                  <span>{getMutualFriends(listing.userId).length} mutual friends</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center text-gray-500 text-xs">
+                                  <UserX className="w-3 h-3 mr-1" />
+                                  <span>Not Connected • {getMutualFriends(listing.userId).length} mutual friends</span>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
-        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div className="flex items-center justify-between">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleListingClick(listing);
+                          }}
+                          className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                        >
+                          View More Details
+                        </Button>
+                        {listing.userId === user.id && (
+                          <div className="flex space-x-1">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onEditListing(listing);
+                              }}
+                              className="text-xs px-2 py-1"
+                            >
+                              Edit
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDeleteListing(listing.id);
+                              }}
+                              className="text-xs px-2 py-1 text-red-600 border-red-200 hover:bg-red-50"
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="product">
+            {renderFilters()}
+            
+            {filteredListings.filter(l => l.type === 'product').length === 0 ? (
+              <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+                <CardContent className="p-12 text-center">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Search className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-700 mb-2">No product listings found</h3>
+                  <p className="text-gray-500 mb-6">No product listings available in your community.</p>
+                  {!isVisiting && (
+                    <Button
+                      onClick={() => onNavigate('sell-product')}
+                      className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+                    >
+                      Sell Product
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredListings.filter(l => l.type === 'product').map((listing) => (
+                  <Card
+                    key={listing.id}
+                    className="border-0 shadow-md bg-white/80 backdrop-blur-sm hover:shadow-lg transition-all duration-200 cursor-pointer"
+                    onClick={() => handleListingClick(listing)}
+                  >
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center space-x-3">
+                        <Avatar className="w-8 h-8">
+                          <AvatarImage src="" />
+                          <AvatarFallback className="bg-gradient-to-br from-rose-500 to-pink-500 text-white text-xs">
+                            {listing.user.name.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900 text-sm">{listing.user.name}</p>
+                          <div className="flex items-center space-x-2 text-xs text-gray-500">
+                            <span className="capitalize">{listing.type}</span>
+                            <span>•</span>
+                            <span>{listing.location}</span>
+                            <span>•</span>
+                            <span>{new Date(listing.createdAt).toLocaleDateString()}</span>
+                          </div>
+                          {listing.userId !== user.id && (
+                            <div className="mt-1">
+                              {isConnectedTo(listing.userId) ? (
+                                <div className="flex items-center text-green-600 text-xs">
+                                  <UserCheck className="w-3 h-3 mr-1" />
+                                  <span>{getMutualFriends(listing.userId).length} mutual friends</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center text-gray-500 text-xs">
+                                  <UserX className="w-3 h-3 mr-1" />
+                                  <span>Not Connected • {getMutualFriends(listing.userId).length} mutual friends</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div className="flex items-center justify-between">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleListingClick(listing);
+                          }}
+                          className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                        >
+                          View More Details
+                        </Button>
+                        {listing.userId === user.id && (
+                          <div className="flex space-x-1">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onEditListing(listing);
+                              }}
+                              className="text-xs px-2 py-1"
+                            >
+                              Edit
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDeleteListing(listing.id);
+                              }}
+                              className="text-xs px-2 py-1 text-red-600 border-red-200 hover:bg-red-50"
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+
       </div>
 
       {/* Filter Dialog */}
