@@ -568,16 +568,6 @@ const CommunityFeed = ({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setShowFilterDialog(true)}
-                className="border-gray-200 hover:border-rose-300"
-              >
-                <Filter className="w-4 h-4 mr-2" />
-                Filter
-              </Button>
-              
-              <Button
-                variant="outline"
-                size="sm"
                 onClick={() => onNavigate('connections')}
                 className="border-gray-200 hover:border-rose-300"
               >

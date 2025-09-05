@@ -99,7 +99,7 @@ const ProfileCreation = ({ onComplete, user, isEditing = false, onUpdateUser, on
             <UserIcon className="w-10 h-10 text-white" />
           </div>
           <CardTitle className="text-2xl font-bold text-gray-900">
-            {isEditing ? 'Edit Profile' : 'Complete Your Profile'}
+            {isEditing ? 'My Profile' : 'Complete Your Profile'}
           </CardTitle>
           <p className="text-gray-600">
             {isEditing ? 'Update your profile information' : 'Tell us about yourself to get started'}
@@ -187,40 +187,6 @@ const ProfileCreation = ({ onComplete, user, isEditing = false, onUpdateUser, on
               />
             </div>
 
-            <div>
-              <Label htmlFor="company">Company (Optional)</Label>
-              <Input
-                type="text"
-                id="company"
-                name="company"
-                value={formData.company}
-                onChange={handleChange}
-                placeholder="Enter your company name"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="bio">Bio (Optional)</Label>
-              <Input
-                id="bio"
-                name="bio"
-                value={formData.bio}
-                onChange={handleChange}
-                placeholder="Write a short bio about yourself"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="interests">Interests (Optional)</Label>
-              <Input
-                type="text"
-                id="interests"
-                name="interests"
-                value={formData.interests}
-                onChange={handleChange}
-                placeholder="Enter your interests (e.g., coding, hiking, music)"
-              />
-            </div>
 
             <Button
               type="submit"

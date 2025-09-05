@@ -38,11 +38,11 @@ const AddService = ({ user, onComplete, onBack, existingListing, isEditing = fal
   ];
 
   const proxyServices = [
-    'Tourist Guide',
-    'Proxy Work (Jamia)',
-    'Proxy Work (DU)',
-    'Proxy Work (Anywhere in Delhi)',
-    'Room Search Assistance'
+    'Academic/Admission Related Assistance',
+    'Accommodation Assistance',
+    'General Errands/Office Work',
+    'Trusted Carry',
+    'Travel Guide'
   ];
 
   const delhiDistricts = [
@@ -72,8 +72,8 @@ const AddService = ({ user, onComplete, onBack, existingListing, isEditing = fal
         });
         return;
       }
-    } else if (serviceType === 'proxy') {
-      if (!formData.proxyType || !formData.location || !formData.charge || !formData.contact) {
+            } else if (serviceType === 'proxy') {
+      if (!formData.proxyType || !formData.charge || !formData.contact) {
         toast({
           title: "Missing Information",
           description: "Please fill in all required fields",
@@ -316,11 +316,20 @@ const AddService = ({ user, onComplete, onBack, existingListing, isEditing = fal
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Location *</Label>
+                  <Label>Location</Label>
                   <Input
-                    placeholder="Enter location"
+                    placeholder="Enter location (optional)"
                     value={formData.location || ''}
                     onChange={(e) => setFormData({...formData, location: e.target.value})}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Date</Label>
+                  <Input
+                    type="date"
+                    value={formData.date || ''}
+                    onChange={(e) => setFormData({...formData, date: e.target.value})}
                   />
                 </div>
 
@@ -341,6 +350,15 @@ const AddService = ({ user, onComplete, onBack, existingListing, isEditing = fal
                     placeholder="Enter contact number"
                     value={formData.contact || ''}
                     onChange={(e) => setFormData({...formData, contact: e.target.value})}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Description</Label>
+                  <Input
+                    placeholder="Add a description for your service"
+                    value={formData.description || ''}
+                    onChange={(e) => setFormData({...formData, description: e.target.value})}
                   />
                 </div>
               </>
