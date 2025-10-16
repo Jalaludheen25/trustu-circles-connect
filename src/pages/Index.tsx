@@ -267,6 +267,109 @@ const generateSampleListings = (): Listing[] => {
 };
 
 const generateCommunitySpecificListings = (homeState: string, currentState: string): Listing[] => {
+  // Kerala users in Delhi (Keralites in Jamia)
+  if (homeState === 'Kerala' && currentState === 'Delhi') {
+    const keralaUsers: User[] = [
+      {
+        id: 'kerala_jamia1',
+        name: 'Anwar Rahman',
+        gender: 'Male',
+        designation: 'Student',
+        homeState: 'Kerala',
+        homeDistrict: 'Malappuram',
+        currentState: 'Delhi',
+        currentDistrict: 'South Delhi',
+        institution: 'Jamia Millia Islamia',
+        phone: '+91 9876543230',
+        email: 'anwar.rahman@example.com'
+      },
+      {
+        id: 'kerala_jamia2',
+        name: 'Ayesha Mohammed',
+        gender: 'Female',
+        designation: 'Student',
+        homeState: 'Kerala',
+        homeDistrict: 'Kozhikode',
+        currentState: 'Delhi',
+        currentDistrict: 'South Delhi',
+        institution: 'Jamia Millia Islamia',
+        phone: '+91 9876543231',
+        email: 'ayesha.mohammed@example.com'
+      },
+      {
+        id: 'kerala_jamia3',
+        name: 'Faizal Ahmed',
+        gender: 'Male',
+        designation: 'Student',
+        homeState: 'Kerala',
+        homeDistrict: 'Kannur',
+        currentState: 'Delhi',
+        currentDistrict: 'South Delhi',
+        institution: 'Jamia Millia Islamia',
+        phone: '+91 9876543232',
+        email: 'faizal.ahmed@example.com'
+      }
+    ];
+
+    return [
+      {
+        id: 'kerala_jamia_listing1',
+        userId: 'kerala_jamia1',
+        user: keralaUsers[0],
+        type: 'accommodation',
+        title: 'Room Available Near Jamia',
+        description: 'Looking for Malayali flatmate. Close to Jamia campus.',
+        location: 'Okhla, Delhi',
+        contact: '+91 9876543230',
+        price: '₹6500/month',
+        details: {
+          accommodationType: 'PG',
+          availableFor: ['Male Bachelors'],
+          maxOccupancy: '2',
+          rentPerDay: '',
+          rentPerMonth: '6500'
+        },
+        createdAt: new Date('2024-01-25')
+      },
+      {
+        id: 'kerala_jamia_listing2',
+        userId: 'kerala_jamia2',
+        user: keralaUsers[1],
+        type: 'proxy',
+        title: 'Academic Assistance Available',
+        description: 'Help with assignments and exam preparation for Jamia students.',
+        location: 'Jamia Nagar, Delhi',
+        contact: '+91 9876543231',
+        price: '',
+        details: {
+          proxyType: 'Academic/Admission Related Assistance',
+          location: 'Jamia Nagar',
+          date: '',
+          charge: '500',
+          serviceDescription: 'Academic help for students'
+        },
+        createdAt: new Date('2024-01-23')
+      },
+      {
+        id: 'kerala_jamia_listing3',
+        userId: 'kerala_jamia3',
+        user: keralaUsers[2],
+        type: 'product',
+        title: 'Engineering Books',
+        description: 'Engineering textbooks for BTech students. Good condition.',
+        location: 'Jamia Nagar, Delhi',
+        contact: '+91 9876543232',
+        price: '₹2500',
+        details: {
+          itemType: 'Educational Items',
+          condition: 'Good',
+          description: 'Engineering course books'
+        },
+        createdAt: new Date('2024-01-21')
+      }
+    ];
+  }
+
   // Tamil users in Delhi
   if (homeState === 'Tamil Nadu' && currentState === 'Delhi') {
     const tamilUsers: User[] = [
