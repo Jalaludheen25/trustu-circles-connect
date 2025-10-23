@@ -651,8 +651,18 @@ const Index = () => {
   }, [connections]);
 
   const generateCommunityName = (userData: User) => {
+    // Handle cases where homeState or currentState might be undefined
+    if (!userData.homeState || !userData.currentState) {
+      return 'Community';
+    }
+    
     if (userData.homeState === userData.currentState) {
       return userData.homeState;
+    }
+    
+    // Special handling for institution-based communities
+    if (userData.institution === 'Jamia Millia Islamia' && userData.homeState === 'Kerala') {
+      return 'Keralites in Jamia';
     }
     
     const homeStateMap: { [key: string]: string } = {
@@ -666,6 +676,11 @@ const Index = () => {
   };
 
   const generateVisitingCommunityName = (homeState: string, currentState: string) => {
+    // Handle cases where homeState or currentState might be undefined
+    if (!homeState || !currentState) {
+      return 'Community';
+    }
+    
     if (homeState === currentState) {
       return homeState;
     }
