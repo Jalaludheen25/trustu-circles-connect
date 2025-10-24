@@ -735,7 +735,7 @@ const CommunityFeed = ({
                   <Avatar className="w-10 h-10">
                     <AvatarImage src="" />
                     <AvatarFallback className="bg-gradient-to-br from-rose-500 to-pink-500 text-white">
-                      {user.name.charAt(0).toUpperCase()}
+                      {(user?.name?.charAt(0) || '?').toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
@@ -790,7 +790,7 @@ const CommunityFeed = ({
                       <Avatar className="w-10 h-10">
                         <AvatarImage src="" />
                         <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white">
-                          {post.user.name.charAt(0).toUpperCase()}
+                          {(post?.user?.name?.charAt(0) || '?').toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
@@ -884,7 +884,7 @@ const CommunityFeed = ({
                         <Avatar className="w-8 h-8">
                           <AvatarImage src="" />
                           <AvatarFallback className="bg-gradient-to-br from-rose-500 to-pink-500 text-white text-xs">
-                            {listing.user.name.charAt(0).toUpperCase()}
+                            {(listing?.user?.name?.charAt(0) || '?').toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
@@ -995,7 +995,7 @@ const CommunityFeed = ({
                         <Avatar className="w-8 h-8">
                           <AvatarImage src="" />
                           <AvatarFallback className="bg-gradient-to-br from-rose-500 to-pink-500 text-white text-xs">
-                            {listing.user.name.charAt(0).toUpperCase()}
+                            {(listing?.user?.name?.charAt(0) || '?').toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
@@ -1106,7 +1106,7 @@ const CommunityFeed = ({
                         <Avatar className="w-8 h-8">
                           <AvatarImage src="" />
                           <AvatarFallback className="bg-gradient-to-br from-rose-500 to-pink-500 text-white text-xs">
-                            {listing.user.name.charAt(0).toUpperCase()}
+                            {(listing?.user?.name?.charAt(0) || '?').toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
@@ -1220,7 +1220,7 @@ const CommunityFeed = ({
                 <Avatar className="w-12 h-12">
                   <AvatarImage src="" />
                   <AvatarFallback className="bg-gradient-to-br from-rose-500 to-pink-500 text-white">
-                    {selectedListing.user.name.charAt(0).toUpperCase()}
+                    {(selectedListing?.user?.name?.charAt(0) || '?').toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div>
